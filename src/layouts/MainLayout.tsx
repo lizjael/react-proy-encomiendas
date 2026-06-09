@@ -8,11 +8,24 @@ export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="d-flex" style={{ minHeight: "100vh" }}>
+    <div style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-grow-1 d-flex flex-column">
+
+      {/* Contenido principal — ocupa el resto del ancho */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0, // evita overflow horizontal
+          marginLeft: 0,
+        }}
+      >
         <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-grow-1 p-4 bg-light">
+        <main
+          className="bg-light"
+          style={{ flex: 1, padding: "1.5rem", overflowY: "auto" }}
+        >
           <Outlet />
         </main>
       </div>
