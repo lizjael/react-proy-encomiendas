@@ -9,10 +9,7 @@ import { getAllEncomiendas } from "../../api/endpoints/encomiendas.api";
 import { getAllPagos } from "../../api/endpoints/pagos.api";
 import { getAllUsers } from "../../api/endpoints/users.api";
 import { useAuth } from "../../hooks/useAuth";
-import {
-  groupByEstadoEntrega,
-  sumByMonth,
-} from "../../utils/statsHelpers";
+import { groupByEstadoEntrega, sumByMonth } from "../../utils/statsHelpers";
 import type { Encomienda, Pago } from "../../types";
 
 export function DashboardAdmin() {
@@ -123,7 +120,7 @@ export function DashboardAdmin() {
     {
       key: "costoTotal",
       label: "Monto",
-      render: (row: Encomienda) => `Bs. ${row.costoTotal.toFixed(2)}`,
+      render: (row: Encomienda) => `Bs. ${Number(row.costoTotal).toFixed(2)}`,
     },
     {
       key: "fechaEmision",

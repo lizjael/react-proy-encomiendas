@@ -67,7 +67,8 @@ export function sumByMonth(
           pago.estado === "COMPLETADO"
         );
       })
-      .reduce((sum, pago) => sum + pago.monto, 0);
+      .reduce((sum, pago) => sum + Number(pago.monto), 0);
+
     return { label: month.label, total };
   });
 }

@@ -125,7 +125,7 @@ export function EncomiendasPage() {
     {
       key: "costoTotal",
       label: "Costo Total",
-      render: (row: Encomienda) => `Bs. ${row.costoTotal.toFixed(2)}`,
+      render: (row: Encomienda) => `Bs. ${Number(row.costoTotal).toFixed(2)}`,
     },
     {
       key: "fechaEmision",

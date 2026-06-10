@@ -37,7 +37,7 @@ export function PagosPage() {
     {
       key: "monto",
       label: "Monto",
-      render: (row: Pago) => `Bs. ${row.monto.toFixed(2)}`,
+      render: (row: Pago) => `Bs. ${Number(row.monto).toFixed(2)}`,
     },
     {
       key: "metodoPago",
