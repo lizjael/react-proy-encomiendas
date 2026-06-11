@@ -48,10 +48,7 @@ export function PerfilPage() {
     resolver: yupResolver(personalInfoSchema),
   });
 
-  const {
-    register: registerWork,
-    handleSubmit: handleSubmitWork,
-  } = useForm({
+  const { register: registerWork, handleSubmit: handleSubmitWork } = useForm({
     resolver: yupResolver(workInfoSchema),
   });
 
@@ -327,8 +324,8 @@ export function PerfilPage() {
                 <div>
                   <p>
                     <strong>Sucursal:</strong>{" "}
-                    {profile.idSucursal
-                      ? `ID: ${profile.idSucursal}`
+                    {profile.sucursal
+                      ? `Nombre: ${profile.sucursal.nombre}`
                       : "No asignada"}
                   </p>
                   <p>

@@ -347,10 +347,8 @@ export function NuevaEncomiendaWizard() {
                   className="form-control"
                   value={
                     profile?.sucursal?.nombre
-                      ? `${profile.sucursal.nombre}${profile.sucursal.ciudad ? ` — ${profile.sucursal.ciudad}` : ""}`
-                      : profile?.idSucursal
-                        ? `Sucursal ID: ${profile.idSucursal}`
-                        : "No asignada"
+                      ? `Sucursal ID: ${profile.sucursal.nombre}`
+                      : "No asignada"
                   }
                   disabled
                 />
