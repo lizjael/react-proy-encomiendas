@@ -41,14 +41,13 @@ export function SucursalesPage() {
     { key: "direccion", label: "Dirección" },
     { key: "telefono", label: "Teléfono" },
     {
-      key: "estado",
+      key: "activo",
       label: "Estado",
-      render: (row: Sucursal) =>
-        row.eliminadoEn ? (
-          <span className="badge bg-danger">Eliminado</span>
-        ) : (
-          <span className="badge bg-success">Activo</span>
-        ),
+      render: (row: Sucursal) => (
+        <span className={`badge ${row.activo ? "bg-success" : "bg-danger"}`}>
+          {row.activo ? "Activo" : "Inactivo"}
+        </span>
+      ),
     },
   ];
 

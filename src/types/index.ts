@@ -41,6 +41,7 @@ export interface UserProfile {
   turno?: string;
   fechaContratacion?: string;
   idSucursal?: number;
+  activo: boolean;
   creadoEn: string;
   eliminadoEn?: string | null;
 }
@@ -56,6 +57,7 @@ export interface Sucursal {
   ciudad?: string;
   direccion?: string;
   telefono?: string;
+  activo: boolean;
   eliminadoEn?: string | null;
 }
 
