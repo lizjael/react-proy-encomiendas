@@ -37,16 +37,6 @@ export function ConsignatariosPage() {
     { key: "idConsignatario", label: "ID", className: "text-center" },
     { key: "nombres", label: "Nombres" },
     { key: "telefono", label: "Teléfono" },
-    {
-      key: "estado",
-      label: "Estado",
-      render: (row: Consignatario) =>
-        row.eliminadoEn ? (
-          <span className="badge bg-danger">Eliminado</span>
-        ) : (
-          <span className="badge bg-success">Activo</span>
-        ),
-    },
   ];
 
   if (!canView("consignatarios")) {

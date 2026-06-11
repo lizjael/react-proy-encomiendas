@@ -488,6 +488,7 @@ export function EmpleadosPage() {
                   >
                     <option value="user">Empleado</option>
                     <option value="admin">Admin</option>
+                    <option value="super_admin">Super Admin</option>
                   </select>
                 </div>
               </div>

@@ -78,16 +78,6 @@ export function ClientesPage() {
     { key: "nit", label: "NIT" },
     { key: "telefono", label: "Teléfono" },
     { key: "direccion", label: "Dirección" },
-    {
-      key: "estado",
-      label: "Estado",
-      render: (row: Cliente) =>
-        row.eliminadoEn ? (
-          <span className="badge bg-danger">Eliminado</span>
-        ) : (
-          <span className="badge bg-success">Activo</span>
-        ),
-    },
   ];
 
   if (!canView("clientes")) {
