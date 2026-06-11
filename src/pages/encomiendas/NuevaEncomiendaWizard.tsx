@@ -349,7 +349,7 @@ export function NuevaEncomiendaWizard() {
                     profile?.sucursal?.nombre
                       ? `${profile.sucursal.nombre}${profile.sucursal.ciudad ? ` — ${profile.sucursal.ciudad}` : ""}`
                       : profile?.idSucursal
-                        ? `Sucursal ID: ${profile.idSucursal}`
+                        ? `${profile.sucursal?.nombre}`
                         : "No asignada"
                   }
                   disabled
