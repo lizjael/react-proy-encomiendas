@@ -48,11 +48,14 @@ export function SucursalFormModal({
     handleSubmit,
     reset,
     setValue,
+    watch, // ✅ agregar esto
     formState: { errors, isSubmitting },
   } = useForm<SucursalFormData>({
     resolver: yupResolver(schema),
     defaultValues: { activo: true },
   });
+
+  const activoValue = watch("activo");
 
   useEffect(() => {
     if (item) {
@@ -160,9 +163,10 @@ export function SucursalFormModal({
                   <label className="form-label">Estado</label>
                   <select
                     className="form-select"
-                    {...register("activo", {
-                      setValueAs: (v) => v === "true" || v === true,
-                    })}
+                    value={activoValue ? "true" : "false"}
+                    onChange={(e) =>
+                      setValue("activo", e.target.value === "true")
+                    }
                   >
                     <option value="true">Activo</option>
                     <option value="false">Inactivo</option>

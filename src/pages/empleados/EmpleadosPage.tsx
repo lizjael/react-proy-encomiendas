@@ -101,21 +101,27 @@ export function EmpleadosPage() {
 
   const handleSaveEdit = async () => {
     if (!selectedItem) return;
+
+    // ✅ Confirma que activo llega como booleano real
+    const payload = {
+      nombres: editForm.nombres || undefined,
+      apellidos: editForm.apellidos || undefined,
+      ci: editForm.ci || undefined,
+      telefono: editForm.telefono || undefined,
+      turno: editForm.turno || undefined,
+      horaEntrada: editForm.horaEntrada || undefined,
+      horaSalida: editForm.horaSalida || undefined,
+      fechaContratacion: editForm.fechaContratacion || undefined,
+      idSucursal: editForm.idSucursal
+        ? parseInt(editForm.idSucursal)
+        : undefined,
+      activo: Boolean(editForm.activo), // ✅ forzar booleano explícito
+    };
+
+    console.log("Enviando payload:", payload); // quita esto después de probar
+
     try {
-      await updateUserProfile(selectedItem.id, {
-        nombres: editForm.nombres || undefined,
-        apellidos: editForm.apellidos || undefined,
-        ci: editForm.ci || undefined,
-        telefono: editForm.telefono || undefined,
-        turno: editForm.turno || undefined,
-        horaEntrada: editForm.horaEntrada || undefined,
-        horaSalida: editForm.horaSalida || undefined,
-        fechaContratacion: editForm.fechaContratacion || undefined,
-        idSucursal: editForm.idSucursal
-          ? parseInt(editForm.idSucursal)
-          : undefined,
-        activo: editForm.activo, // ✅ boolean directo, no condicional
-      });
+      await updateUserProfile(selectedItem.id, payload);
       toast.success("Perfil actualizado correctamente");
       refresh();
       setShowEditModal(false);
