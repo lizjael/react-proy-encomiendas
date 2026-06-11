@@ -346,15 +346,17 @@ export function NuevaEncomiendaWizard() {
                   type="text"
                   className="form-control"
                   value={
-                    profile?.sucursal
-                      ? `${profile.sucursal.nombre} — ${profile.sucursal.ciudad || profile.sucursal.direccion || ""}`
+                    profile?.sucursal?.nombre
+                      ? `${profile.sucursal.nombre}${profile.sucursal.ciudad ? ` — ${profile.sucursal.ciudad}` : ""}`
                       : profile?.idSucursal
                         ? `Sucursal ID: ${profile.idSucursal}`
                         : "No asignada"
                   }
                   disabled
                 />
-                <small className="text-muted">Asignada a tu cuenta</small>
+                <small className="text-muted">
+                  Sucursal asignada a tu cuenta
+                </small>
               </div>
 
               <div className="mb-4">
@@ -380,7 +382,8 @@ export function NuevaEncomiendaWizard() {
                     <option value="">Seleccionar sucursal destino...</option>
                     {sucursalesDestino.map((s) => (
                       <option key={s.idSucursal} value={s.idSucursal}>
-                        {s.nombre} — {s.ciudad || s.direccion || "Sin ciudad"}
+                        {s.nombre}
+                        {s.ciudad ? ` — ${s.ciudad}` : ""}
                       </option>
                     ))}
                   </select>
@@ -388,7 +391,6 @@ export function NuevaEncomiendaWizard() {
               </div>
             </div>
           )}
-
           {/* Paso 3: Ítems */}
           {state.step === 3 && (
             <div>
