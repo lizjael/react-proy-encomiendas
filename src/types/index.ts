@@ -92,8 +92,8 @@ export interface UpdateProfileDto {
   turno?: string;
   fechaContratacion?: string;
   idSucursal?: number;
+  activo?: boolean; // ← Agregar esta línea
 }
-
 // =======================
 // DTOs existentes
 // =======================
@@ -210,4 +210,11 @@ export interface UpdateEncomiendaDto {
   estadoEntrega?: EstadoEntrega;
   estadoPago?: EstadoPago;
   observaciones?: string;
+}
+
+export interface CreateUserDto {
+  name: string;
+  email: string;
+  password: string;
+  role?: "user" | "admin" | "super_admin";
 }

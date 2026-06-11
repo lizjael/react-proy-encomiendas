@@ -1,6 +1,7 @@
 // src/api/endpoints/users.api.ts
 import api from "../axiosConfig";
 import type { UserProfile, UpdateProfileDto } from "../../types";
+import type { CreateUserDto } from "../../types";
 
 export async function getMyProfile(): Promise<UserProfile> {
   const res = await api.get<UserProfile>("/users/me");
@@ -34,4 +35,9 @@ export async function updateUserProfile(
 
 export async function deleteUser(id: number): Promise<void> {
   await api.delete(`/users/${id}`);
+}
+
+export async function createUser(dto: CreateUserDto): Promise<UserProfile> {
+  const res = await api.post<UserProfile>("/users", dto);
+  return res.data;
 }
