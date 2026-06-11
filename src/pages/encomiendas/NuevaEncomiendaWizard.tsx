@@ -6,6 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { ClienteSearchInput } from "../../components/forms/ClienteSearchInput";
 import { ConsignatarioSearchInput } from "../../components/forms/ConsignatarioSearchInput";
 import { ClienteFormModal } from "../../components/forms/ClienteFormModal";
+import { ConsignatarioFormModal } from "../../components/forms/ConsignatarioFormModal";
 import { createEncomienda } from "../../api/endpoints/encomiendas.api";
 import { createDetalle } from "../../api/endpoints/detalles.api";
 import { createPago, METODOS_PAGO } from "../../api/endpoints/pagos.api";
@@ -115,13 +116,14 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 export function NuevaEncomiendaWizard() {
   const [state, dispatch] = useReducer(wizardReducer, initialState);
   const [showClienteModal, setShowClienteModal] = useState(false);
+  const [showConsignatarioModal, setShowConsignatarioModal] = useState(false);
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [loadingSucursales, setLoadingSucursales] = useState(false);
   const [loading, setLoading] = useState(false);
   const { profile } = useAuth();
   const navigate = useNavigate();
 
-  // ✅ FIX: Cargar sucursales al montar (no al cambiar el select)
+  // Cargar sucursales al montar
   useEffect(() => {
     setLoadingSucursales(true);
     getAllSucursales()
@@ -317,10 +319,23 @@ export function NuevaEncomiendaWizard() {
                     })
                   }
                 />
+                <button
+                  className="btn btn-link mt-2"
+                  onClick={() => setShowConsignatarioModal(true)}
+                >
+                  + Crear nuevo consignatario
+                </button>
                 {state.consignatario && (
-                  <div className="alert alert-info mt-2">
-                    <strong>{state.consignatario.nombres}</strong> — Tel:{" "}
-                    {state.consignatario.telefono}
+                  <div className="card mt-2 bg-light">
+                    <div className="card-body">
+                      <h6 className="mb-2">Consignatario seleccionado:</h6>
+                      <p className="mb-1">
+                        <strong>{state.consignatario.nombres}</strong>
+                      </p>
+                      <p className="mb-0 text-muted">
+                        Tel: {state.consignatario.telefono}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -331,9 +346,11 @@ export function NuevaEncomiendaWizard() {
                   type="text"
                   className="form-control"
                   value={
-                    profile?.idSucursal
-                      ? `Sucursal ID: ${profile.idSucursal}`
-                      : "No asignada"
+                    profile?.sucursal
+                      ? `${profile.sucursal.nombre} — ${profile.sucursal.ciudad || profile.sucursal.direccion || ""}`
+                      : profile?.idSucursal
+                        ? `Sucursal ID: ${profile.idSucursal}`
+                        : "No asignada"
                   }
                   disabled
                 />
@@ -363,7 +380,7 @@ export function NuevaEncomiendaWizard() {
                     <option value="">Seleccionar sucursal destino...</option>
                     {sucursalesDestino.map((s) => (
                       <option key={s.idSucursal} value={s.idSucursal}>
-                        {s.nombre} — {s.ciudad}
+                        {s.nombre} — {s.ciudad || s.direccion || "Sin ciudad"}
                       </option>
                     ))}
                   </select>
@@ -606,7 +623,6 @@ export function NuevaEncomiendaWizard() {
                     <label className="form-label fw-bold">
                       Método de Pago *
                     </label>
-                    {/* ✅ FIX: Usa constante local en vez de llamada API */}
                     <select
                       className="form-select"
                       value={state.pagoMetodo}
@@ -668,9 +684,11 @@ export function NuevaEncomiendaWizard() {
                 </p>
                 <p>
                   <strong>Ruta:</strong>{" "}
-                  {profile?.idSucursal
-                    ? `Sucursal ${profile.idSucursal}`
-                    : "Origen"}{" "}
+                  {profile?.sucursal
+                    ? `${profile.sucursal.nombre} — ${profile.sucursal.ciudad || profile.sucursal.direccion || ""}`
+                    : profile?.idSucursal
+                      ? `Sucursal ${profile.idSucursal}`
+                      : "Origen"}{" "}
                   → {state.sucursalDestino?.nombre}
                 </p>
                 <p>
@@ -736,6 +754,15 @@ export function NuevaEncomiendaWizard() {
         onSaved={() => {
           setShowClienteModal(false);
           toast.success("Cliente creado, ya puedes buscarlo");
+        }}
+      />
+
+      <ConsignatarioFormModal
+        show={showConsignatarioModal}
+        onClose={() => setShowConsignatarioModal(false)}
+        onSaved={() => {
+          setShowConsignatarioModal(false);
+          toast.success("Consignatario creado, ya puedes buscarlo");
         }}
       />
     </div>
