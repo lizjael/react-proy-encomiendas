@@ -62,13 +62,16 @@ export function ClientesPage() {
     {
       key: "tipoCliente",
       label: "Tipo",
-      render: (row: Cliente) => (
-        <span
-          className={`badge ${row.tipoCliente === "NATURAL" ? "bg-info" : "bg-primary"}`}
-        >
-          {row.tipoCliente === "NATURAL" ? "Natural" : "Jurídico"}
-        </span>
-      ),
+      render: (row: Cliente) => {
+        const tipo = row.tipoCliente?.toUpperCase();
+        const esEmpresa =
+          tipo === "JURIDICO" || tipo === "EMPRESA" || tipo === "EMPRESARIAL";
+        return (
+          <span className={`badge ${esEmpresa ? "bg-primary" : "bg-info"}`}>
+            {esEmpresa ? "Empresa" : "Persona"}
+          </span>
+        );
+      },
     },
     { key: "nombreRazonSocial", label: "Nombre/Razón Social" },
     { key: "ci", label: "CI" },

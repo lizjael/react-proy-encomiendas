@@ -63,7 +63,13 @@ export interface Sucursal {
 
 export interface Cliente {
   idCliente: number;
-  tipoCliente: "NATURAL" | "JURIDICO";
+  tipoCliente:
+    | "NATURAL"
+    | "JURIDICO"
+    | "persona"
+    | "empresa"
+    | "EMPRESARIAL"
+    | string;
   nombreRazonSocial: string;
   ci?: string;
   nit?: string;

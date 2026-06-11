@@ -14,6 +14,24 @@ interface ClienteFormModalProps {
   onSaved: () => void;
 }
 
+// Función helper para normalizar el tipo de cliente
+const normalizeTipoCliente = (
+  tipo: string | undefined,
+): "NATURAL" | "JURIDICO" => {
+  if (!tipo) return "NATURAL";
+  const upperTipo = tipo.toUpperCase();
+  // Si es empresa/jurídico, retornar "JURIDICO", si no "NATURAL"
+  if (
+    upperTipo === "JURIDICO" ||
+    upperTipo === "EMPRESA" ||
+    upperTipo === "EMPRESARIAL"
+  ) {
+    return "JURIDICO";
+  }
+  // Cualquier otro valor (NATURAL, persona, etc.) se considera persona natural
+  return "NATURAL";
+};
+
 const schema = yup.object({
   tipoCliente: yup
     .string()
@@ -60,14 +78,13 @@ export function ClienteFormModal({
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateClienteDto>({
-    // Cast necesario: yup infiere ci/nit como required en la firma del resolver
-    // aunque el DTO los declara opcionales
     resolver: yupResolver(schema) as any,
   });
 
   useEffect(() => {
     if (item) {
-      setValue("tipoCliente", item.tipoCliente);
+      // Normalizar el tipoCliente antes de asignarlo
+      setValue("tipoCliente", normalizeTipoCliente(item.tipoCliente));
       setValue("nombreRazonSocial", item.nombreRazonSocial);
       setValue("ci", item.ci ?? "");
       setValue("nit", item.nit ?? "");
@@ -123,7 +140,7 @@ export function ClienteFormModal({
                 <label className="form-label">Tipo de Cliente *</label>
                 <select className="form-control" {...register("tipoCliente")}>
                   <option value="NATURAL">Persona Natural</option>
-                  <option value="JURIDICO">Persona Jurídica</option>
+                  <option value="JURIDICO">Empresa / Jurídico</option>
                 </select>
                 {errors.tipoCliente && (
                   <small className="text-danger">
@@ -148,7 +165,9 @@ export function ClienteFormModal({
 
               <div className="mb-3">
                 <label className="form-label">
-                  {item?.tipoCliente === "NATURAL" ? "CI *" : "CI"}
+                  {item && normalizeTipoCliente(item.tipoCliente) === "NATURAL"
+                    ? "CI *"
+                    : "CI"}
                 </label>
                 <input
                   type="text"
@@ -162,7 +181,9 @@ export function ClienteFormModal({
 
               <div className="mb-3">
                 <label className="form-label">
-                  {item?.tipoCliente === "JURIDICO" ? "NIT *" : "NIT"}
+                  {item && normalizeTipoCliente(item.tipoCliente) === "JURIDICO"
+                    ? "NIT *"
+                    : "NIT"}
                 </label>
                 <input
                   type="text"
