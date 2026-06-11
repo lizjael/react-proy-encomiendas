@@ -8,7 +8,7 @@ import type {
 export async function createDetalle(
   dto: CreateDetalleEncomiendaDto,
 ): Promise<DetalleEncomienda> {
-  const res = await api.post<DetalleEncomienda>("/detalle-encomienda", dto);
+  const res = await api.post<DetalleEncomienda>("/detalle-encomiendas", dto);
   return res.data;
 }
 
@@ -17,12 +17,12 @@ export async function updateDetalle(
   dto: Partial<CreateDetalleEncomiendaDto>,
 ): Promise<DetalleEncomienda> {
   const res = await api.patch<DetalleEncomienda>(
-    `/detalle-encomienda/${id}`,
+    `/detalle-encomiendas/${id}`,
     dto,
   );
   return res.data;
 }
 
 export async function deleteDetalle(id: number): Promise<void> {
-  await api.delete(`/detalle-encomienda/${id}`);
+  await api.delete(`/detalle-encomiendas/${id}`);
 }
