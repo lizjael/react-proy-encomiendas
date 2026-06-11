@@ -114,7 +114,7 @@ export function EmpleadosPage() {
         idSucursal: editForm.idSucursal
           ? parseInt(editForm.idSucursal)
           : undefined,
-        activo: editForm.activo,
+        activo: editForm.activo, // ✅ boolean directo, no condicional
       });
       toast.success("Perfil actualizado correctamente");
       refresh();
@@ -210,7 +210,7 @@ export function EmpleadosPage() {
       key: "idSucursal",
       label: "Sucursal",
       render: (row: UserProfile) =>
-        row.idSucursal ? `Sucursal #${row.idSucursal}` : "-",
+        row.sucursal?.ciudad ?? (row.idSucursal ? `ID ${row.idSucursal}` : "-"),
     },
     {
       key: "activo",

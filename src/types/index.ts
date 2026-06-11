@@ -41,7 +41,8 @@ export interface UserProfile {
   turno?: string;
   fechaContratacion?: string;
   idSucursal?: number;
-  activo: boolean;
+  sucursal?: Sucursal; // ✅ objeto completo para mostrar nombre/ciudad
+  activo: boolean; // ✅ campo que faltaba
   creadoEn: string;
   eliminadoEn?: string | null;
 }
@@ -57,7 +58,7 @@ export interface Sucursal {
   ciudad?: string;
   direccion?: string;
   telefono?: string;
-  activo: boolean;
+  activo: boolean; // ✅ campo que faltaba
   eliminadoEn?: string | null;
 }
 
@@ -98,8 +99,9 @@ export interface UpdateProfileDto {
   turno?: string;
   fechaContratacion?: string;
   idSucursal?: number;
-  activo?: boolean; // ← Agregar esta línea
+  activo?: boolean; // ✅ campo que faltaba
 }
+
 // =======================
 // DTOs existentes
 // =======================
@@ -129,7 +131,13 @@ export interface CreateSucursalDto {
   telefono: string;
 }
 
-export interface UpdateSucursalDto extends Partial<CreateSucursalDto> {}
+export interface UpdateSucursalDto {
+  nombre?: string;
+  ciudad?: string;
+  direccion?: string;
+  telefono?: string;
+  activo?: boolean; // ✅ campo que faltaba
+}
 
 // =======================
 // NUEVAS INTERFACES
