@@ -166,15 +166,46 @@ export function NuevaEncomiendaWizard() {
 
   const handleSubmit = async () => {
     if (!profile) return;
+
+    // Validar que el perfil tenga los datos necesarios
+    if (!profile.id) {
+      toast.error(
+        "No se pudo obtener el ID del empleado. Volvé a iniciar sesión.",
+      );
+      return;
+    }
+    if (!profile.idSucursal) {
+      toast.error(
+        "Tu cuenta no tiene una sucursal asignada. Contactá al administrador.",
+      );
+      return;
+    }
+
     setLoading(true);
     try {
-      // 1. Crear encomienda — idEmpleado lo inyecta el backend desde @ActiveUser()
+      // Generar número de guía único: GUI-YYYYMMDD-XXXXX
+      const now = new Date();
+      const datePart = now.toISOString().slice(0, 10).replace(/-/g, "");
+      const randomPart = Math.floor(10000 + Math.random() * 90000);
+      const nroGuia = `GUI-${datePart}-${randomPart}`;
+
+      // Las fechas deben estar en formato ISO 8601 completo
+      const fechaEmision = now.toISOString();
+      const fechaLimiteEntrega = new Date(
+        state.fechaLimiteEntrega + "T12:00:00.000Z",
+      ).toISOString();
+
+      // 1. Crear encomienda con todos los campos requeridos
       const encomienda = await createEncomienda({
-        fechaLimiteEntrega: state.fechaLimiteEntrega,
+        nroGuia,
+        fechaEmision,
+        fechaLimiteEntrega,
         observaciones: state.observaciones,
         costoTotal,
         idCliente: state.cliente!.idCliente,
         idConsignatario: state.consignatario!.idConsignatario,
+        idEmpleado: profile.id, // ← del usuario logueado
+        idSucursalOrigen: profile.idSucursal, // ← sucursal del empleado
         idSucursalDestino: state.sucursalDestino!.idSucursal,
       });
 
@@ -193,7 +224,7 @@ export function NuevaEncomiendaWizard() {
       if (state.modalidadPago === "ORIGEN") {
         await createPago({
           monto: state.pagoMonto,
-          fecha: state.pagoFecha,
+          fecha: new Date(state.pagoFecha + "T12:00:00.000Z").toISOString(),
           referencia: state.pagoReferencia || undefined,
           metodoPago: state.pagoMetodo as MetodoPago,
           idEncomienda: encomienda.idEncomienda,

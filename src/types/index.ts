@@ -204,15 +204,16 @@ export interface CreateDetalleEncomiendaDto {
 }
 
 export interface CreateEncomiendaDto {
-  nroGuia: string; // ← NUEVO: número de guía autogenerado
-  fechaEmision: string; // ← NUEVO: fecha de hoy en ISO 8601
+  nroGuia?: string;
+  fechaEmision?: string;
+  idEmpleado?: number;
+  idSucursalOrigen?: number;
+
   fechaLimiteEntrega: string;
-  observaciones?: string;
+  observaciones: string;
   costoTotal: number;
   idCliente: number;
   idConsignatario: number;
-  idEmpleado: number; // ← NUEVO: ID del empleado logueado
-  idSucursalOrigen: number; // ← NUEVO: sucursal del empleado logueado
   idSucursalDestino: number;
 }
 
