@@ -41,15 +41,40 @@ export function SucursalesPage() {
     { key: "direccion", label: "Dirección" },
     { key: "telefono", label: "Teléfono" },
     {
-      key: "activo",
+      key: "estado",
       label: "Estado",
       render: (row: Sucursal) => (
-        <span className={`badge ${row.activo ? "bg-success" : "bg-danger"}`}>
-          {row.activo ? "Activo" : "Inactivo"}
+        <span
+          className={`badge ${row.estado === "Activo" ? "bg-success" : "bg-danger"}`}
+        >
+          {row.estado || "Inactivo"}
         </span>
       ),
     },
   ];
+
+  // Funciones handle antes del return
+  const handleEdit = (item: Sucursal) => {
+    setSelectedItem(item);
+    setShowModal(true);
+  };
+
+  const handleDelete = (item: Sucursal) => {
+    setSelectedItem(item);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (selectedItem) {
+      await deleteItem(selectedItem.idSucursal);
+      setShowConfirm(false);
+      setSelectedItem(undefined);
+    }
+  };
+
+  const handleSave = () => {
+    refresh();
+  };
 
   if (!canView("sucursales")) {
     return (
@@ -124,26 +149,4 @@ export function SucursalesPage() {
       />
     </div>
   );
-
-  function handleEdit(item: Sucursal) {
-    setSelectedItem(item);
-    setShowModal(true);
-  }
-
-  function handleDelete(item: Sucursal) {
-    setSelectedItem(item);
-    setShowConfirm(true);
-  }
-
-  async function handleConfirmDelete() {
-    if (selectedItem) {
-      await deleteItem(selectedItem.idSucursal);
-      setShowConfirm(false);
-      setSelectedItem(undefined);
-    }
-  }
-
-  function handleSave() {
-    refresh();
-  }
 }

@@ -42,7 +42,7 @@ export interface UserProfile {
   fechaContratacion?: string;
   idSucursal?: number;
   sucursal?: Sucursal; // ✅ objeto completo para mostrar nombre/ciudad
-  activo: boolean; // ✅ campo que faltaba
+  estado: string;
   creadoEn: string;
   eliminadoEn?: string | null;
 }
@@ -58,7 +58,7 @@ export interface Sucursal {
   ciudad?: string;
   direccion?: string;
   telefono?: string;
-  activo: boolean; // ✅ campo que faltaba
+  estado: string;
   eliminadoEn?: string | null;
 }
 
@@ -99,7 +99,7 @@ export interface UpdateProfileDto {
   turno?: string;
   fechaContratacion?: string;
   idSucursal?: number;
-  activo?: boolean; // ✅ campo que faltaba
+  estado?: string;
 }
 
 // =======================
@@ -136,7 +136,7 @@ export interface UpdateSucursalDto {
   ciudad?: string;
   direccion?: string;
   telefono?: string;
-  activo?: boolean; // ✅ campo que faltaba
+  estado?: string;
 }
 
 // =======================

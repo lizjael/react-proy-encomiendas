@@ -15,7 +15,7 @@ interface SucursalFormData {
   ciudad: string;
   direccion: string;
   telefono: string;
-  activo: boolean;
+  estado: "Activo" | "Inactivo";
 }
 
 interface SucursalFormModalProps {
@@ -34,7 +34,7 @@ const schema = yup.object({
     .matches(/^[0-9+-]+$/, "Solo números, + y -")
     .required("Teléfono es requerido")
     .max(20),
-  activo: yup.boolean().required(), // ✅ incluido en el schema
+  estado: yup.string().oneOf(["Activo", "Inactivo"]).required(),
 });
 
 export function SucursalFormModal({
@@ -48,14 +48,17 @@ export function SucursalFormModal({
     handleSubmit,
     reset,
     setValue,
-    watch, // ✅ agregar esto
     formState: { errors, isSubmitting },
   } = useForm<SucursalFormData>({
     resolver: yupResolver(schema),
-    defaultValues: { activo: true },
+    defaultValues: {
+      nombre: "",
+      ciudad: "",
+      direccion: "",
+      telefono: "",
+      estado: "Activo",
+    },
   });
-
-  const activoValue = watch("activo");
 
   useEffect(() => {
     if (item) {
@@ -63,14 +66,19 @@ export function SucursalFormModal({
       setValue("ciudad", item.ciudad ?? "");
       setValue("direccion", item.direccion ?? "");
       setValue("telefono", item.telefono ?? "");
-      setValue("activo", item.activo ?? true); // ✅ cargar estado actual
+      setValue(
+        "estado",
+        item.estado === "Activo" || item.estado === "Inactivo"
+          ? item.estado
+          : "Activo",
+      );
     } else {
       reset({
         nombre: "",
         ciudad: "",
         direccion: "",
         telefono: "",
-        activo: true,
+        estado: "Activo",
       });
     }
   }, [item, setValue, reset]);
@@ -120,6 +128,7 @@ export function SucursalFormModal({
                   <small className="text-danger">{errors.nombre.message}</small>
                 )}
               </div>
+
               <div className="mb-3">
                 <label className="form-label">Ciudad *</label>
                 <input
@@ -131,6 +140,7 @@ export function SucursalFormModal({
                   <small className="text-danger">{errors.ciudad.message}</small>
                 )}
               </div>
+
               <div className="mb-3">
                 <label className="form-label">Dirección *</label>
                 <input
@@ -144,6 +154,7 @@ export function SucursalFormModal({
                   </small>
                 )}
               </div>
+
               <div className="mb-3">
                 <label className="form-label">Teléfono *</label>
                 <input
@@ -157,23 +168,19 @@ export function SucursalFormModal({
                   </small>
                 )}
               </div>
-              {/* ✅ campo activo — solo visible al editar */}
+
+              {/* Campo Estado - solo visible en edición */}
               {item && (
                 <div className="mb-3">
                   <label className="form-label">Estado</label>
-                  <select
-                    className="form-select"
-                    value={activoValue ? "true" : "false"}
-                    onChange={(e) =>
-                      setValue("activo", e.target.value === "true")
-                    }
-                  >
-                    <option value="true">Activo</option>
-                    <option value="false">Inactivo</option>
+                  <select className="form-select" {...register("estado")}>
+                    <option value="Activo">Activo</option>
+                    <option value="Inactivo">Inactivo</option>
                   </select>
                 </div>
               )}
             </div>
+
             <div className="modal-footer">
               <button
                 type="button"

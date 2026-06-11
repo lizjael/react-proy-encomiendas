@@ -40,7 +40,7 @@ export function EmpleadosPage() {
     horaSalida: "",
     fechaContratacion: "",
     idSucursal: "",
-    activo: true,
+    estado: "Activo", // ✅ antes era activo: true
   });
 
   const [createForm, setCreateForm] = useState({
@@ -60,6 +60,7 @@ export function EmpleadosPage() {
     horaSalida: "",
     fechaContratacion: "",
     idSucursal: "",
+    estado: "",
   });
 
   const { canEdit, canDelete, canView } = usePermissions();
@@ -93,7 +94,7 @@ export function EmpleadosPage() {
       horaSalida: item.horaSalida ?? "",
       fechaContratacion: item.fechaContratacion?.split("T")[0] ?? "",
       idSucursal: item.idSucursal?.toString() ?? "",
-      activo: item.activo ?? true,
+      estado: item.estado ?? "Activo",
     });
     await loadSucursales();
     setShowEditModal(true);
@@ -115,7 +116,7 @@ export function EmpleadosPage() {
       idSucursal: editForm.idSucursal
         ? parseInt(editForm.idSucursal)
         : undefined,
-      activo: Boolean(editForm.activo), // ✅ forzar booleano explícito
+      estado: editForm.estado ?? "", // ✅ forzar booleano explícito
     };
 
     console.log("Enviando payload:", payload); // quita esto después de probar
@@ -166,6 +167,7 @@ export function EmpleadosPage() {
       horaSalida: emp.horaSalida ?? "",
       fechaContratacion: emp.fechaContratacion?.split("T")[0] ?? "",
       idSucursal: currentUser?.idSucursal?.toString() ?? "",
+      estado: emp.estado ?? "",
     });
     setSearchResults([]);
     setSearchEmail("");
@@ -186,6 +188,8 @@ export function EmpleadosPage() {
         idSucursal: asignarForm.idSucursal
           ? parseInt(asignarForm.idSucursal)
           : undefined,
+
+        estado: asignarForm.estado || undefined,
       });
       toast.success("Empleado asignado a sucursal correctamente");
       refresh();
@@ -219,11 +223,13 @@ export function EmpleadosPage() {
         row.sucursal?.ciudad ?? (row.idSucursal ? `ID ${row.idSucursal}` : "-"),
     },
     {
-      key: "activo",
+      key: "estado",
       label: "Estado",
       render: (row: UserProfile) => (
-        <span className={`badge ${row.activo ? "bg-success" : "bg-danger"}`}>
-          {row.activo ? "Activo" : "Inactivo"}
+        <span
+          className={`badge ${row.estado === "Activo" ? "bg-success" : "bg-danger"}`}
+        >
+          {row.estado ?? "Inactivo"}
         </span>
       ),
     },
@@ -370,16 +376,13 @@ export function EmpleadosPage() {
                     <label className="form-label">Estado</label>
                     <select
                       className="form-select"
-                      value={editForm.activo ? "true" : "false"}
+                      value={editForm.estado}
                       onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          activo: e.target.value === "true",
-                        })
+                        setEditForm({ ...editForm, estado: e.target.value })
                       }
                     >
-                      <option value="true">Activo</option>
-                      <option value="false">Inactivo</option>
+                      <option value="Activo">Activo</option>
+                      <option value="Inactivo">Inactivo</option>
                     </select>
                   </div>
                   <div className="col-md-6">
