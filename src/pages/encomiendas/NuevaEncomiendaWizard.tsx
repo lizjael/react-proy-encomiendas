@@ -190,9 +190,17 @@ export function NuevaEncomiendaWizard() {
       const nroGuia = `GUI-${datePart}-${randomPart}`;
 
       // Las fechas deben estar en formato ISO 8601 completo
-      const fechaEmision = now.toISOString();
+      const fechaEmision = now.toISOString(); // esto está bien
+      const [year, month, day] = state.fechaLimiteEntrega
+        .split("-")
+        .map(Number);
       const fechaLimiteEntrega = new Date(
-        state.fechaLimiteEntrega + "T12:00:00.000Z",
+        Date.UTC(year, month - 1, day, 12, 0, 0),
+      ).toISOString();
+
+      const [py, pm, pd] = state.pagoFecha.split("-").map(Number);
+      const fechaPagoISO = new Date(
+        Date.UTC(py, pm - 1, pd, 12, 0, 0),
       ).toISOString();
 
       // 1. Crear encomienda con todos los campos requeridos
@@ -224,7 +232,7 @@ export function NuevaEncomiendaWizard() {
       if (state.modalidadPago === "ORIGEN") {
         await createPago({
           monto: state.pagoMonto,
-          fecha: new Date(state.pagoFecha + "T12:00:00.000Z").toISOString(),
+          fecha: fechaPagoISO,
           referencia: state.pagoReferencia || undefined,
           metodoPago: state.pagoMetodo as MetodoPago,
           idEncomienda: encomienda.idEncomienda,
