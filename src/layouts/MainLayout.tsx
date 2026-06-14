@@ -1,4 +1,3 @@
-// src/layouts/MainLayout.tsx
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -8,23 +7,33 @@ export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        backgroundColor: "#F8F5F0",
+      }}
+    >
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Contenido principal — ocupa el resto del ancho */}
+      {/* Contenido principal */}
       <div
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          minWidth: 0, // evita overflow horizontal
-          marginLeft: 0,
+          minWidth: 0,
+          backgroundColor: "#F8F5F0",
         }}
       >
         <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main
-          className="bg-light"
-          style={{ flex: 1, padding: "1.5rem", overflowY: "auto" }}
+          style={{
+            flex: 1,
+            padding: "1.5rem",
+            overflowY: "auto",
+            backgroundColor: "#F8F5F0",
+          }}
         >
           <Outlet />
         </main>

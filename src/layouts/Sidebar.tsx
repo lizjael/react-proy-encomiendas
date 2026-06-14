@@ -1,7 +1,20 @@
-// src/layouts/Sidebar.tsx
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { RoleBadge } from "../components/ui/RoleBadge";
+import {
+  Package,
+  LayoutDashboard,
+  UserCircle,
+  Package as PackageIcon,
+  CreditCard,
+  Users,
+  Handshake,
+  Building2,
+  BarChart2,
+  FileText,
+  LogOut,
+  Settings,
+} from "lucide-react";
 
 interface SidebarProps {
   open: boolean;
@@ -18,7 +31,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   };
 
   const handleNavClick = () => {
-    // Cierra el sidebar en mobile al hacer clic en un enlace
     if (window.innerWidth < 992) {
       onClose();
     }
@@ -32,12 +44,302 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       .toUpperCase()
       .slice(0, 2);
 
+  const SIDEBAR_WIDTH = 260;
+
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `d-flex align-items-center gap-2 px-3 py-2 rounded text-decoration-none ${
-      isActive ? "bg-primary text-white" : "text-white-50"
+    `d-flex align-items-center gap-3 px-3 py-2 text-decoration-none transition-all ${
+      isActive
+        ? "active-nav-link text-white"
+        : "inactive-nav-link text-secondary"
     }`;
 
-  const SIDEBAR_WIDTH = 260;
+  const SidebarContentComponent = () => (
+    <div
+      className="d-flex flex-column h-100"
+      style={{ backgroundColor: "#1A1A1A" }}
+    >
+      {/* Logo */}
+      <div className="px-3 pt-4 pb-3 mb-3">
+        <div className="d-flex align-items-center gap-2 mb-1">
+          <Package size={28} color="#D4A017" strokeWidth={1.8} />
+          <span
+            className="fw-bold"
+            style={{
+              color: "#FFFFFF",
+              fontSize: "1.25rem",
+              letterSpacing: "-0.3px",
+            }}
+          >
+            Expreso Tupiza
+          </span>
+        </div>
+        <div
+          className="small"
+          style={{
+            color: "#9CA3AF",
+            fontSize: "0.7rem",
+            letterSpacing: "0.3px",
+          }}
+        >
+          SISTEMA DE ENCOMIENDAS
+        </div>
+      </div>
+
+      {/* Menú */}
+      <nav className="flex-grow-1 px-2" style={{ overflowY: "auto" }}>
+        {/* Sección Principal */}
+        <div className="mb-4">
+          <div
+            className="small text-uppercase px-3 mb-2"
+            style={{
+              color: "#6B7280",
+              fontSize: "0.65rem",
+              letterSpacing: "0.5px",
+            }}
+          >
+            Principal
+          </div>
+          <div className="d-flex flex-column gap-1">
+            <NavLink
+              to="/dashboard"
+              className={navLinkClass}
+              onClick={handleNavClick}
+            >
+              <LayoutDashboard size={18} />
+              <span>Dashboard</span>
+            </NavLink>
+            <NavLink
+              to="/perfil"
+              className={navLinkClass}
+              onClick={handleNavClick}
+            >
+              <UserCircle size={18} />
+              <span>Mi Perfil</span>
+            </NavLink>
+          </div>
+        </div>
+
+        {/* Sección Operaciones */}
+        {(user?.role === "user" ||
+          user?.role === "admin" ||
+          user?.role === "super_admin") && (
+          <div className="mb-4">
+            <div
+              className="small text-uppercase px-3 mb-2"
+              style={{
+                color: "#6B7280",
+                fontSize: "0.65rem",
+                letterSpacing: "0.5px",
+              }}
+            >
+              Operaciones
+            </div>
+            <div className="d-flex flex-column gap-1">
+              <NavLink
+                to="/encomiendas"
+                className={navLinkClass}
+                onClick={handleNavClick}
+              >
+                <PackageIcon size={18} />
+                <span>Encomiendas</span>
+              </NavLink>
+              <NavLink
+                to="/pagos"
+                className={navLinkClass}
+                onClick={handleNavClick}
+              >
+                <CreditCard size={18} />
+                <span>Pagos</span>
+              </NavLink>
+            </div>
+          </div>
+        )}
+
+        {/* Sección Gestión */}
+        {(user?.role === "admin" || user?.role === "super_admin") && (
+          <div className="mb-4">
+            <div
+              className="small text-uppercase px-3 mb-2"
+              style={{
+                color: "#6B7280",
+                fontSize: "0.65rem",
+                letterSpacing: "0.5px",
+              }}
+            >
+              Gestión
+            </div>
+            <div className="d-flex flex-column gap-1">
+              <NavLink
+                to="/clientes"
+                className={navLinkClass}
+                onClick={handleNavClick}
+              >
+                <Users size={18} />
+                <span>Clientes</span>
+              </NavLink>
+              <NavLink
+                to="/consignatarios"
+                className={navLinkClass}
+                onClick={handleNavClick}
+              >
+                <Handshake size={18} />
+                <span>Consignatarios</span>
+              </NavLink>
+              <NavLink
+                to="/empleados"
+                className={navLinkClass}
+                onClick={handleNavClick}
+              >
+                <Users size={18} />
+                <span>Empleados</span>
+              </NavLink>
+            </div>
+          </div>
+        )}
+
+        {/* Sección Administración */}
+        {user?.role === "super_admin" && (
+          <div className="mb-4">
+            <div
+              className="small text-uppercase px-3 mb-2"
+              style={{
+                color: "#6B7280",
+                fontSize: "0.65rem",
+                letterSpacing: "0.5px",
+              }}
+            >
+              Administración
+            </div>
+            <div className="d-flex flex-column gap-1">
+              <NavLink
+                to="/sucursales"
+                className={navLinkClass}
+                onClick={handleNavClick}
+              >
+                <Building2 size={18} />
+                <span>Sucursales</span>
+              </NavLink>
+            </div>
+          </div>
+        )}
+
+        {/* Sección Reportes */}
+        {(user?.role === "admin" || user?.role === "super_admin") && (
+          <div className="mb-4">
+            <div
+              className="small text-uppercase px-3 mb-2"
+              style={{
+                color: "#6B7280",
+                fontSize: "0.65rem",
+                letterSpacing: "0.5px",
+              }}
+            >
+              Reportes
+            </div>
+            <div className="d-flex flex-column gap-1">
+              <NavLink
+                to="/estadisticas"
+                className={navLinkClass}
+                onClick={handleNavClick}
+              >
+                <BarChart2 size={18} />
+                <span>Estadísticas</span>
+              </NavLink>
+              <NavLink
+                to="/reportes"
+                className={navLinkClass}
+                onClick={handleNavClick}
+              >
+                <FileText size={18} />
+                <span>Reportes PDF</span>
+              </NavLink>
+            </div>
+          </div>
+        )}
+
+        {/* Sección Sistema (opcional) */}
+        {user?.role === "super_admin" && (
+          <div className="mb-4">
+            <div
+              className="small text-uppercase px-3 mb-2"
+              style={{
+                color: "#6B7280",
+                fontSize: "0.65rem",
+                letterSpacing: "0.5px",
+              }}
+            >
+              Sistema
+            </div>
+            <div className="d-flex flex-column gap-1">
+              <NavLink
+                to="/configuracion"
+                className={navLinkClass}
+                onClick={handleNavClick}
+              >
+                <Settings size={18} />
+                <span>Configuración</span>
+              </NavLink>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Usuario activo */}
+      {user && (
+        <div className="p-3 mt-auto" style={{ borderTop: "1px solid #2A2A2A" }}>
+          <div className="d-flex align-items-center gap-2 mb-3">
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+              style={{
+                width: "40px",
+                height: "40px",
+                backgroundColor: "#8B1A1A",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#FFFFFF",
+              }}
+            >
+              {getInitials(user.name)}
+            </div>
+            <div className="flex-grow-1" style={{ minWidth: 0 }}>
+              <div
+                className="fw-semibold text-truncate"
+                style={{ color: "#FFFFFF", fontSize: "0.85rem" }}
+              >
+                {user.name}
+              </div>
+              <RoleBadge role={user.role} />
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="btn w-100 d-flex align-items-center justify-content-center gap-2"
+            style={{
+              backgroundColor: "transparent",
+              border: "1px solid #374151",
+              color: "#9CA3AF",
+              fontSize: "0.85rem",
+              padding: "0.5rem",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#2A2A2A";
+              e.currentTarget.style.color = "#FFFFFF";
+              e.currentTarget.style.borderColor = "#8B1A1A";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = "#9CA3AF";
+              e.currentTarget.style.borderColor = "#374151";
+            }}
+          >
+            <LogOut size={16} />
+            <span>Cerrar sesión</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -48,229 +350,61 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
+            backgroundColor: "rgba(0,0,0,0.6)",
             zIndex: 1040,
           }}
           className="d-lg-none"
         />
       )}
 
-      {/* Sidebar */}
+      {/* Mobile: sidebar deslizante */}
       <div
-        className="bg-dark d-flex flex-column"
+        className="d-lg-none"
         style={{
+          position: "fixed",
+          top: 0,
+          left: open ? 0 : `-${SIDEBAR_WIDTH}px`,
           width: `${SIDEBAR_WIDTH}px`,
-          minWidth: `${SIDEBAR_WIDTH}px`,
-          minHeight: "100vh",
-          // En mobile: fixed y se desliza; en desktop: estático (en flujo normal)
-          position: undefined, // se controla por clases abajo
+          height: "100vh",
           zIndex: 1041,
-          // Desktop: siempre visible y estático
-          // Mobile: overlay deslizante
+          transition: "left 0.3s ease",
+          boxShadow: open ? "2px 0 8px rgba(0,0,0,0.3)" : "none",
         }}
       >
-        {/* Usamos un wrapper para manejar mobile vs desktop */}
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: open ? 0 : `-${SIDEBAR_WIDTH}px`,
-            width: `${SIDEBAR_WIDTH}px`,
-            height: "100vh",
-            backgroundColor: "#212529",
-            display: "flex",
-            flexDirection: "column",
-            zIndex: 1041,
-            transition: "left 0.3s ease",
-          }}
-          className="d-lg-none"
-        >
-          <SidebarContent
-            user={user}
-            navLinkClass={navLinkClass}
-            handleNavClick={handleNavClick}
-            handleLogout={handleLogout}
-            getInitials={getInitials}
-          />
-        </div>
-
-        {/* Desktop: estático, siempre visible */}
-        <div
-          className="d-none d-lg-flex flex-column bg-dark"
-          style={{ width: `${SIDEBAR_WIDTH}px`, minHeight: "100vh" }}
-        >
-          <SidebarContent
-            user={user}
-            navLinkClass={navLinkClass}
-            handleNavClick={handleNavClick}
-            handleLogout={handleLogout}
-            getInitials={getInitials}
-          />
-        </div>
-      </div>
-    </>
-  );
-}
-
-// Contenido del sidebar extraído para no duplicar JSX
-function SidebarContent({
-  user,
-  navLinkClass,
-  handleNavClick,
-  handleLogout,
-  getInitials,
-}: any) {
-  return (
-    <>
-      {/* Logo */}
-      <div className="p-3 border-bottom border-secondary">
-        <h3 className="text-white mb-0">📦 GestEnc</h3>
-        <small className="text-white-50">Sistema de Encomiendas</small>
+        <SidebarContentComponent />
       </div>
 
-      {/* Menú */}
-      <nav className="flex-grow-1 p-3" style={{ overflowY: "auto" }}>
-        <div className="mb-4">
-          <small className="text-white-50 text-uppercase">Principal</small>
-          <div className="mt-2 d-flex flex-column gap-1">
-            <NavLink
-              to="/dashboard"
-              className={navLinkClass}
-              onClick={handleNavClick}
-            >
-              🏠 <span>Dashboard</span>
-            </NavLink>
-            <NavLink
-              to="/perfil"
-              className={navLinkClass}
-              onClick={handleNavClick}
-            >
-              👤 <span>Mi Perfil</span>
-            </NavLink>
-          </div>
-        </div>
+      {/* Desktop: sidebar fijo */}
+      <div
+        className="d-none d-lg-flex flex-shrink-0"
+        style={{
+          width: `${SIDEBAR_WIDTH}px`,
+          height: "100vh",
+          position: "sticky",
+          top: 0,
+          overflowY: "auto",
+        }}
+      >
+        <SidebarContentComponent />
+      </div>
 
-        {(user?.role === "user" ||
-          user?.role === "admin" ||
-          user?.role === "super_admin") && (
-          <div className="mb-4">
-            <small className="text-white-50 text-uppercase">Operaciones</small>
-            <div className="mt-2 d-flex flex-column gap-1">
-              <NavLink
-                to="/encomiendas"
-                className={navLinkClass}
-                onClick={handleNavClick}
-              >
-                📦 <span>Encomiendas</span>
-              </NavLink>
-              <NavLink
-                to="/pagos"
-                className={navLinkClass}
-                onClick={handleNavClick}
-              >
-                💳 <span>Pagos</span>
-              </NavLink>
-            </div>
-          </div>
-        )}
-
-        {(user?.role === "admin" || user?.role === "super_admin") && (
-          <div className="mb-4">
-            <small className="text-white-50 text-uppercase">Gestión</small>
-            <div className="mt-2 d-flex flex-column gap-1">
-              <NavLink
-                to="/clientes"
-                className={navLinkClass}
-                onClick={handleNavClick}
-              >
-                👥 <span>Clientes</span>
-              </NavLink>
-              <NavLink
-                to="/consignatarios"
-                className={navLinkClass}
-                onClick={handleNavClick}
-              >
-                🤝 <span>Consignatarios</span>
-              </NavLink>
-              <NavLink
-                to="/empleados"
-                className={navLinkClass}
-                onClick={handleNavClick}
-              >
-                👨‍💼 <span>Empleados</span>
-              </NavLink>
-            </div>
-          </div>
-        )}
-
-        {user?.role === "super_admin" && (
-          <div className="mb-4">
-            <small className="text-white-50 text-uppercase">
-              Administración
-            </small>
-            <div className="mt-2 d-flex flex-column gap-1">
-              <NavLink
-                to="/sucursales"
-                className={navLinkClass}
-                onClick={handleNavClick}
-              >
-                🏢 <span>Sucursales</span>
-              </NavLink>
-            </div>
-          </div>
-        )}
-
-        {(user?.role === "admin" || user?.role === "super_admin") && (
-          <div className="mb-4">
-            <small className="text-white-50 text-uppercase">Reportes</small>
-            <div className="mt-2 d-flex flex-column gap-1">
-              <NavLink
-                to="/estadisticas"
-                className={navLinkClass}
-                onClick={handleNavClick}
-              >
-                📊 <span>Estadísticas</span>
-              </NavLink>
-              <NavLink
-                to="/reportes"
-                className={navLinkClass}
-                onClick={handleNavClick}
-              >
-                📄 <span>Reportes PDF</span>
-              </NavLink>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      {/* Usuario activo */}
-      {user && (
-        <div className="p-3 border-top border-secondary">
-          <div className="d-flex align-items-center gap-2 mb-2">
-            <div
-              className="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white"
-              style={{ width: "40px", height: "40px", fontSize: "18px" }}
-            >
-              {getInitials(user.name)}
-            </div>
-            <div className="flex-grow-1">
-              <div
-                className="text-white fw-semibold"
-                style={{ fontSize: "14px" }}
-              >
-                {user.name}
-              </div>
-              <RoleBadge role={user.role} />
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="btn btn-outline-light btn-sm w-100 mt-2"
-          >
-            🚪 Cerrar sesión
-          </button>
-        </div>
-      )}
+      <style>{`
+        .active-nav-link {
+          background-color: #8B1A1A !important;
+          border-left: 3px solid #D4A017 !important;
+          font-weight: 500;
+        }
+        .inactive-nav-link {
+          color: #9CA3AF !important;
+        }
+        .inactive-nav-link:hover {
+          background-color: #2A2A2A !important;
+          color: #FFFFFF !important;
+        }
+        .transition-all {
+          transition: all 0.2s ease;
+        }
+      `}</style>
     </>
   );
 }
