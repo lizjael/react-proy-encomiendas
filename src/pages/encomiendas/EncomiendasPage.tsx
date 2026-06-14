@@ -140,7 +140,11 @@ export function EncomiendasPage() {
       key: "estadoEntrega",
       label: "Estado Entrega",
       render: (row: Encomienda) => {
-        const config = estadoEntregaConfig[row.estadoEntrega];
+        const config = estadoEntregaConfig[row.estadoEntrega] ?? {
+          label: row.estadoEntrega,
+          color: "#6B7280",
+          bg: "rgba(107, 114, 128, 0.1)",
+        };
         return (
           <select
             className="form-select form-select-sm"
@@ -172,7 +176,11 @@ export function EncomiendasPage() {
       key: "estadoPago",
       label: "Estado Pago",
       render: (row: Encomienda) => {
-        const config = estadoPagoConfig[row.estadoPago];
+        const config = estadoPagoConfig[row.estadoPago] ?? {
+          label: row.estadoPago,
+          color: "#6B7280",
+          bg: "rgba(107, 114, 128, 0.1)",
+        };
         return (
           <span
             className="badge rounded-pill px-3 py-1"
