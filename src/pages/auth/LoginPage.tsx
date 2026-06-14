@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../hooks/useAuth";
 import { login as apiLogin } from "../../api/endpoints/auth.api";
+import { Mail, Lock, Eye, EyeOff, RefreshCw, Package } from "lucide-react";
 
 // ── Esquema de validación ──────────────────────────────────────────────────────
 const schema = yup.object({
@@ -28,19 +29,21 @@ function generateCaptcha() {
   ).join("");
 }
 
-// ── Componente CAPTCHA visual ──────────────────────────────────────────────────
+// ── Componente CAPTCHA visual rediseñado ──────────────────────────────────────────────────
 function CaptchaDisplay({ text }: { text: string }) {
-  const rotations = [-8, 5, -3, 7, -5, 4];
+  const rotations = [-6, 4, -3, 5, -4, 3];
   return (
     <div
-      className="d-flex align-items-center justify-content-center gap-1 rounded px-3 py-2 user-select-none"
+      className="d-flex align-items-center justify-content-center gap-2 rounded px-3 py-2 user-select-none w-100"
       style={{
-        background: "linear-gradient(135deg, #e8e8e8, #d0d0d0)",
-        fontFamily: "'Courier New', Courier, monospace",
-        fontSize: "1.6rem",
+        background:
+          "repeating-linear-gradient(45deg, #f0f0f0 0px, #f0f0f0 2px, #e8e8e8 2px, #e8e8e8 4px)",
+        fontFamily: "'Courier New', 'Fira Code', monospace",
+        fontSize: "1.5rem",
         fontWeight: 700,
-        letterSpacing: "0.15em",
-        border: "2px dashed #aaa",
+        letterSpacing: "0.2em",
+        border: "1px solid #D1D5DB",
+        borderRadius: "12px",
         minHeight: "56px",
       }}
     >
@@ -49,9 +52,10 @@ function CaptchaDisplay({ text }: { text: string }) {
           key={i}
           style={{
             display: "inline-block",
-            transform: `rotate(${rotations[i]}deg) scaleY(${i % 2 === 0 ? 1 : 0.9})`,
+            transform: `rotate(${rotations[i]}deg) scaleY(${i % 2 === 0 ? 1 : 0.95})`,
             color:
-              i % 3 === 0 ? "#1a1a6e" : i % 3 === 1 ? "#6e1a1a" : "#1a6e1a",
+              i % 3 === 0 ? "#8B1A1A" : i % 3 === 1 ? "#D4A017" : "#1A1A1A",
+            textShadow: "1px 1px 0 rgba(0,0,0,0.05)",
           }}
         >
           {char}
@@ -61,7 +65,7 @@ function CaptchaDisplay({ text }: { text: string }) {
   );
 }
 
-// ── LoginPage ──────────────────────────────────────────────────────────────────
+// ── LoginPage Rediseñada ──────────────────────────────────────────────────────────────────
 export function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -106,103 +110,218 @@ export function LoginPage() {
   };
 
   return (
-    <div className="w-100" style={{ maxWidth: "420px" }}>
-      {/* Card */}
+    <div
+      className="w-100"
+      style={{ maxWidth: "440px", animation: "fadeIn 0.4s ease" }}
+    >
       <div
-        className="card border-0 shadow-lg"
-        style={{ borderRadius: "16px", overflow: "hidden" }}
+        className="card border-0"
+        style={{
+          backgroundColor: "#FFFFFF",
+          borderRadius: "16px",
+          boxShadow:
+            "0 20px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)",
+          overflow: "hidden",
+        }}
       >
-        {/* Header */}
-        <div
-          className="text-center py-4 px-4"
-          style={{ background: "linear-gradient(135deg, #0f3460, #16213e)" }}
-        >
-          <div className="mb-2" style={{ fontSize: "2.5rem" }}>
-            📦
+        {/* Header del card */}
+        <div className="text-center pt-5 px-4 pb-3">
+          <div
+            className="d-flex align-items-center justify-content-center mx-auto mb-3"
+            style={{
+              backgroundColor: "rgba(139, 26, 26, 0.08)",
+              borderRadius: "16px",
+              width: "64px",
+              height: "64px",
+            }}
+          >
+            <Package size={32} color="#8B1A1A" />
           </div>
-          <h4 className="text-white fw-bold mb-0">Gestión de Encomiendas</h4>
-          <small className="text-white-50">Inicia sesión para continuar</small>
+          <h3
+            className="fw-bold mb-2"
+            style={{
+              color: "#1A1A1A",
+              fontSize: "1.5rem",
+              fontFamily: "'Poppins', sans-serif",
+            }}
+          >
+            Bienvenido
+          </h3>
+          <p style={{ color: "#6B7280", fontSize: "0.85rem", margin: 0 }}>
+            Inicia sesión en tu cuenta
+          </p>
         </div>
 
-        {/* Body */}
-        <div className="card-body p-4">
+        {/* Body del formulario */}
+        <div className="card-body px-4 pb-4">
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             {/* Email */}
             <div className="mb-3">
-              <label className="form-label fw-semibold">
+              <label
+                className="form-label fw-semibold mb-2"
+                style={{ color: "#374151", fontSize: "0.8rem" }}
+              >
                 Correo electrónico
               </label>
-              <input
-                type="email"
-                className={`form-control ${errors.email ? "is-invalid" : ""}`}
-                placeholder="usuario@empresa.com"
-                {...register("email")}
-              />
+              <div className="position-relative">
+                <div
+                  className="position-absolute start-0 top-0 bottom-0 d-flex align-items-center ps-3"
+                  style={{ pointerEvents: "none" }}
+                >
+                  <Mail size={18} color="#9CA3AF" />
+                </div>
+                <input
+                  type="email"
+                  className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                  placeholder="usuario@empresa.com"
+                  style={{
+                    paddingLeft: "40px",
+                    borderRadius: "10px",
+                    borderColor: "#E5E0D8",
+                    height: "48px",
+                    fontSize: "0.85rem",
+                  }}
+                  {...register("email")}
+                />
+              </div>
               {errors.email && (
-                <div className="invalid-feedback">{errors.email.message}</div>
+                <div
+                  className="invalid-feedback d-block mt-1"
+                  style={{ fontSize: "0.7rem" }}
+                >
+                  {errors.email.message}
+                </div>
               )}
             </div>
 
             {/* Password */}
             <div className="mb-3">
-              <label className="form-label fw-semibold">Contraseña</label>
-              <div className="input-group">
+              <label
+                className="form-label fw-semibold mb-2"
+                style={{ color: "#374151", fontSize: "0.8rem" }}
+              >
+                Contraseña
+              </label>
+              <div className="position-relative">
+                <div
+                  className="position-absolute start-0 top-0 bottom-0 d-flex align-items-center ps-3"
+                  style={{ pointerEvents: "none" }}
+                >
+                  <Lock size={18} color="#9CA3AF" />
+                </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   className={`form-control ${errors.password ? "is-invalid" : ""}`}
                   placeholder="••••••••"
+                  style={{
+                    paddingLeft: "40px",
+                    paddingRight: "40px",
+                    borderRadius: "10px",
+                    borderColor: "#E5E0D8",
+                    height: "48px",
+                    fontSize: "0.85rem",
+                  }}
                   {...register("password")}
                 />
                 <button
                   type="button"
-                  className="btn btn-outline-secondary"
+                  className="position-absolute end-0 top-0 bottom-0 d-flex align-items-center justify-content-center border-0 bg-transparent"
                   onClick={() => setShowPassword((v) => !v)}
+                  style={{ width: "44px", zIndex: 2 }}
                   tabIndex={-1}
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showPassword ? (
+                    <EyeOff size={18} color="#6B7280" />
+                  ) : (
+                    <Eye size={18} color="#6B7280" />
+                  )}
                 </button>
-                {errors.password && (
-                  <div className="invalid-feedback">
-                    {errors.password.message}
-                  </div>
-                )}
               </div>
+              {errors.password && (
+                <div
+                  className="invalid-feedback d-block mt-1"
+                  style={{ fontSize: "0.7rem" }}
+                >
+                  {errors.password.message}
+                </div>
+              )}
             </div>
 
             {/* CAPTCHA */}
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Verificación</label>
-              <div className="d-flex align-items-center gap-2 mb-2">
+            <div className="mb-4">
+              <label
+                className="form-label fw-semibold mb-2"
+                style={{ color: "#374151", fontSize: "0.8rem" }}
+              >
+                Verificación de seguridad
+              </label>
+              <div className="d-flex gap-2 mb-2">
                 <CaptchaDisplay text={captchaText} />
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-secondary"
+                  className="btn d-flex align-items-center justify-content-center flex-shrink-0"
                   onClick={refreshCaptcha}
                   title="Refrescar CAPTCHA"
+                  style={{
+                    backgroundColor: "#F8F5F0",
+                    border: "1px solid #E5E0D8",
+                    borderRadius: "10px",
+                    width: "48px",
+                    height: "56px",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#E5E0D8";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#F8F5F0";
+                  }}
                 >
-                  🔄
+                  <RefreshCw size={18} color="#6B7280" />
                 </button>
               </div>
               <input
                 type="text"
                 className={`form-control ${errors.captcha ? "is-invalid" : ""}`}
                 placeholder="Escribe los caracteres que ves"
+                style={{
+                  borderRadius: "10px",
+                  borderColor: "#E5E0D8",
+                  height: "48px",
+                  fontSize: "0.85rem",
+                }}
                 {...register("captcha")}
                 autoComplete="off"
               />
               {errors.captcha && (
-                <div className="invalid-feedback">{errors.captcha.message}</div>
+                <div
+                  className="invalid-feedback d-block mt-1"
+                  style={{ fontSize: "0.7rem" }}
+                >
+                  {errors.captcha.message}
+                </div>
               )}
             </div>
 
             {/* Submit */}
             <button
               type="submit"
-              className="btn btn-primary w-100 fw-semibold py-2"
+              className="btn w-100 fw-semibold"
               disabled={isSubmitting}
               style={{
-                background: "linear-gradient(135deg, #0f3460, #16213e)",
+                backgroundColor: "#8B1A1A",
                 border: "none",
+                color: "#FFFFFF",
+                borderRadius: "10px",
+                height: "48px",
+                fontSize: "0.9rem",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#5C0E0E";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#8B1A1A";
               }}
             >
               {isSubmitting ? (
@@ -210,6 +329,10 @@ export function LoginPage() {
                   <span
                     className="spinner-border spinner-border-sm me-2"
                     role="status"
+                    style={{
+                      borderColor: "#FFFFFF",
+                      borderRightColor: "transparent",
+                    }}
                   />
                   Ingresando...
                 </>
@@ -221,11 +344,24 @@ export function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div className="card-footer text-center bg-transparent border-top py-3">
-          <small className="text-muted">
+        <div
+          className="card-footer text-center bg-transparent py-4"
+          style={{ borderTop: "1px solid #F0EDE8" }}
+        >
+          <small style={{ color: "#6B7280" }}>
             ¿No tienes cuenta?{" "}
-            <Link to="/registro" className="fw-semibold text-decoration-none">
-              Registrarse
+            <Link
+              to="/registro"
+              className="fw-semibold text-decoration-none"
+              style={{ color: "#8B1A1A" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#D4A017";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#8B1A1A";
+              }}
+            >
+              Regístrate aquí
             </Link>
           </small>
         </div>
