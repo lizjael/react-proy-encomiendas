@@ -1,4 +1,3 @@
-// src/pages/clientes/ClientesPage.tsx
 import { useState } from "react";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { DataTable } from "../../components/ui/DataTable";
@@ -11,7 +10,7 @@ import {
   deleteCliente,
 } from "../../api/endpoints/clientes.api";
 import type { Cliente } from "../../types";
-import { ClienteSearchInput } from "../../components/forms/ClienteSearchInput";
+import { Users, Search, Plus, Building2, User } from "lucide-react";
 
 export function ClientesPage() {
   const [showModal, setShowModal] = useState(false);
@@ -58,7 +57,12 @@ export function ClientesPage() {
   };
 
   const columns = [
-    { key: "idCliente", label: "ID", className: "text-center" },
+    {
+      key: "idCliente",
+      label: "ID",
+      className: "text-center",
+      mobileHidden: true,
+    },
     {
       key: "tipoCliente",
       label: "Tipo",
@@ -67,17 +71,28 @@ export function ClientesPage() {
         const esEmpresa =
           tipo === "JURIDICO" || tipo === "EMPRESA" || tipo === "EMPRESARIAL";
         return (
-          <span className={`badge ${esEmpresa ? "bg-primary" : "bg-info"}`}>
+          <span
+            className="badge rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1"
+            style={{
+              backgroundColor: esEmpresa
+                ? "rgba(139, 26, 26, 0.1)"
+                : "rgba(212, 160, 23, 0.1)",
+              color: esEmpresa ? "#8B1A1A" : "#D4A017",
+              fontSize: "0.7rem",
+              fontWeight: 500,
+            }}
+          >
+            {esEmpresa ? <Building2 size={12} /> : <User size={12} />}
             {esEmpresa ? "Empresa" : "Persona"}
           </span>
         );
       },
     },
     { key: "nombreRazonSocial", label: "Nombre/Razón Social" },
-    { key: "ci", label: "CI" },
-    { key: "nit", label: "NIT" },
-    { key: "telefono", label: "Teléfono" },
-    { key: "direccion", label: "Dirección" },
+    { key: "ci", label: "CI", mobileHidden: true },
+    { key: "nit", label: "NIT", mobileHidden: true },
+    { key: "telefono", label: "Teléfono", mobileHidden: true },
+    { key: "direccion", label: "Dirección", mobileHidden: true },
   ];
 
   if (!canView("clientes")) {
@@ -94,33 +109,80 @@ export function ClientesPage() {
       <PageHeader
         title="Clientes"
         subtitle="Gestión de clientes y personas jurídicas"
+        icon={<Users size={24} />}
         action={
           canCreate("clientes") && (
             <button
-              className="btn btn-primary"
+              className="btn d-flex align-items-center gap-2"
               onClick={() => {
                 setSelectedItem(undefined);
                 setShowModal(true);
               }}
+              style={{
+                backgroundColor: "#8B1A1A",
+                border: "none",
+                borderRadius: "10px",
+                padding: "0.5rem 1.25rem",
+                color: "#FFFFFF",
+                fontWeight: 500,
+                fontSize: "0.85rem",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#5C0E0E";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#8B1A1A";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
             >
-              + Nuevo Cliente
+              <Plus size={18} />
+              Nuevo Cliente
             </button>
           )
         }
       />
 
-      <div className="card shadow-sm">
-        <div className="card-body">
-          <div className="mb-3">
-            <ClienteSearchInput
-              onSelect={(cliente) => {
-                setSearchTerm(cliente.nombreRazonSocial);
-                // Aquí podrías redirigir o seleccionar el cliente
+      <div
+        className="rounded-3 overflow-hidden"
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "1px solid #E5E0D8",
+          borderRadius: "12px",
+        }}
+      >
+        <div className="p-4 border-bottom" style={{ borderColor: "#E5E0D8" }}>
+          <div className="position-relative" style={{ maxWidth: "350px" }}>
+            <Search
+              size={18}
+              color="#9CA3AF"
+              style={{
+                position: "absolute",
+                left: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
               }}
-              placeholder="Buscar cliente por CI, NIT o nombre..."
+            />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar por CI, NIT o nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                paddingLeft: "38px",
+                borderRadius: "10px",
+                borderColor: "#E5E0D8",
+                height: "42px",
+                fontSize: "0.85rem",
+              }}
             />
           </div>
+        </div>
 
+        <div className="p-0">
           <DataTable
             columns={columns}
             data={filteredData}

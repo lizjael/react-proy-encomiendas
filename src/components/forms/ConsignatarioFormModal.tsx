@@ -1,4 +1,3 @@
-// src/components/forms/ConsignatarioFormModal.tsx
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -9,6 +8,7 @@ import {
   updateConsignatario,
 } from "../../api/endpoints/consignatarios.api";
 import type { Consignatario, CreateConsignatarioDto } from "../../types";
+import { User, Phone, X, Save } from "lucide-react";
 
 interface ConsignatarioFormModalProps {
   show: boolean;
@@ -80,60 +80,187 @@ export function ConsignatarioFormModal({
     <div
       className="modal show d-block"
       tabIndex={-1}
-      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+      style={{
+        backgroundColor: "rgba(0,0,0,0.6)",
+        zIndex: 1050,
+        animation: "fadeIn 0.2s ease",
+      }}
     >
-      <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">
+      <div
+        className="modal-dialog modal-dialog-centered"
+        style={{ maxWidth: "450px" }}
+      >
+        <div
+          className="modal-content"
+          style={{
+            borderRadius: "16px",
+            border: "none",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            className="modal-header border-0"
+            style={{
+              backgroundColor: "#1A1A1A",
+              padding: "1.25rem 1.5rem",
+            }}
+          >
+            <h5
+              className="modal-title fw-semibold"
+              style={{
+                color: "#FFFFFF",
+                fontSize: "1.1rem",
+              }}
+            >
               {item ? "Editar Consignatario" : "Nuevo Consignatario"}
             </h5>
-            <button type="button" className="btn-close" onClick={onClose} />
+            <button
+              type="button"
+              className="btn p-0"
+              onClick={onClose}
+              style={{ color: "#FFFFFF", opacity: 0.7 }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "0.7";
+              }}
+            >
+              <X size={20} />
+            </button>
           </div>
+
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="modal-body">
+            <div
+              className="modal-body p-4"
+              style={{ backgroundColor: "#F8F5F0" }}
+            >
               <div className="mb-3">
-                <label className="form-label">Nombres *</label>
+                <label
+                  className="form-label fw-semibold mb-2"
+                  style={{ color: "#374151", fontSize: "0.8rem" }}
+                >
+                  <User size={14} className="me-1" />
+                  Nombres *
+                </label>
                 <input
                   type="text"
                   className="form-control"
+                  placeholder="Ej: Juan Carlos Rodríguez"
                   {...register("nombres")}
+                  style={{
+                    borderRadius: "10px",
+                    borderColor: "#E5E0D8",
+                    height: "42px",
+                    fontSize: "0.85rem",
+                  }}
                 />
                 {errors.nombres && (
-                  <small className="text-danger">
+                  <small
+                    className="text-danger d-block mt-1"
+                    style={{ fontSize: "0.7rem" }}
+                  >
                     {errors.nombres.message}
                   </small>
                 )}
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Teléfono *</label>
+                <label
+                  className="form-label fw-semibold mb-2"
+                  style={{ color: "#374151", fontSize: "0.8rem" }}
+                >
+                  <Phone size={14} className="me-1" />
+                  Teléfono *
+                </label>
                 <input
                   type="tel"
                   className="form-control"
+                  placeholder="Ej: 71234567"
                   {...register("telefono")}
+                  style={{
+                    borderRadius: "10px",
+                    borderColor: "#E5E0D8",
+                    height: "42px",
+                    fontSize: "0.85rem",
+                  }}
                 />
                 {errors.telefono && (
-                  <small className="text-danger">
+                  <small
+                    className="text-danger d-block mt-1"
+                    style={{ fontSize: "0.7rem" }}
+                  >
                     {errors.telefono.message}
                   </small>
                 )}
               </div>
             </div>
-            <div className="modal-footer">
+
+            <div
+              className="modal-footer border-0"
+              style={{
+                backgroundColor: "#FFFFFF",
+                padding: "1rem 1.5rem",
+              }}
+            >
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn"
                 onClick={onClose}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "1px solid #E5E0D8",
+                  borderRadius: "10px",
+                  padding: "0.5rem 1.25rem",
+                  color: "#6B7280",
+                  fontSize: "0.85rem",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#F8F5F0";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn d-flex align-items-center gap-2"
                 disabled={isSubmitting}
+                style={{
+                  backgroundColor: "#8B1A1A",
+                  border: "none",
+                  borderRadius: "10px",
+                  padding: "0.5rem 1.25rem",
+                  color: "#FFFFFF",
+                  fontSize: "0.85rem",
+                  fontWeight: 500,
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#5C0E0E";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#8B1A1A";
+                }}
               >
-                {isSubmitting ? "Guardando..." : "Guardar"}
+                {isSubmitting ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                    />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} />
+                    Guardar
+                  </>
+                )}
               </button>
             </div>
           </form>

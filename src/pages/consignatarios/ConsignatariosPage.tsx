@@ -1,4 +1,3 @@
-// src/pages/consignatarios/ConsignatariosPage.tsx
 import { useState } from "react";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { DataTable } from "../../components/ui/DataTable";
@@ -11,6 +10,7 @@ import {
   deleteConsignatario,
 } from "../../api/endpoints/consignatarios.api";
 import type { Consignatario } from "../../types";
+import { Handshake, Search, Plus, Phone } from "lucide-react";
 
 export function ConsignatariosPage() {
   const [showModal, setShowModal] = useState(false);
@@ -34,9 +34,23 @@ export function ConsignatariosPage() {
   });
 
   const columns = [
-    { key: "idConsignatario", label: "ID", className: "text-center" },
+    {
+      key: "idConsignatario",
+      label: "ID",
+      className: "text-center",
+      mobileHidden: true,
+    },
     { key: "nombres", label: "Nombres" },
-    { key: "telefono", label: "Teléfono" },
+    {
+      key: "telefono",
+      label: "Teléfono",
+      render: (row: Consignatario) => (
+        <div className="d-flex align-items-center gap-2">
+          <Phone size={14} color="#9CA3AF" />
+          <span>{row.telefono}</span>
+        </div>
+      ),
+    },
   ];
 
   if (!canView("consignatarios")) {
@@ -53,33 +67,80 @@ export function ConsignatariosPage() {
       <PageHeader
         title="Consignatarios"
         subtitle="Gestión de consignatarios de encomiendas"
+        icon={<Handshake size={24} />}
         action={
           canCreate("consignatarios") && (
             <button
-              className="btn btn-primary"
+              className="btn d-flex align-items-center gap-2"
               onClick={() => {
                 setSelectedItem(undefined);
                 setShowModal(true);
               }}
+              style={{
+                backgroundColor: "#8B1A1A",
+                border: "none",
+                borderRadius: "10px",
+                padding: "0.5rem 1.25rem",
+                color: "#FFFFFF",
+                fontWeight: 500,
+                fontSize: "0.85rem",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#5C0E0E";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#8B1A1A";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
             >
-              + Nuevo Consignatario
+              <Plus size={18} />
+              Nuevo Consignatario
             </button>
           )
         }
       />
 
-      <div className="card shadow-sm">
-        <div className="card-body">
-          <div className="mb-3">
+      <div
+        className="rounded-3 overflow-hidden"
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "1px solid #E5E0D8",
+          borderRadius: "12px",
+        }}
+      >
+        <div className="p-4 border-bottom" style={{ borderColor: "#E5E0D8" }}>
+          <div className="position-relative" style={{ maxWidth: "350px" }}>
+            <Search
+              size={18}
+              color="#9CA3AF"
+              style={{
+                position: "absolute",
+                left: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+              }}
+            />
             <input
               type="text"
               className="form-control"
               placeholder="Buscar por nombre o teléfono..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                paddingLeft: "38px",
+                borderRadius: "10px",
+                borderColor: "#E5E0D8",
+                height: "42px",
+                fontSize: "0.85rem",
+              }}
             />
           </div>
+        </div>
 
+        <div className="p-0">
           <DataTable
             columns={columns}
             data={filteredData}
