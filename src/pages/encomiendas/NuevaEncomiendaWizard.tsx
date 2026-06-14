@@ -1,4 +1,3 @@
-// src/pages/encomiendas/NuevaEncomiendaWizard.tsx
 import { useState, useReducer, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -19,6 +18,18 @@ import type {
   DetalleEncomienda,
   MetodoPago,
 } from "../../types";
+import {
+  User,
+  Package,
+  CreditCard,
+  CheckCircle,
+  ChevronRight,
+  Plus,
+  Trash2,
+  Building2,
+  MapPin,
+  Calendar,
+} from "lucide-react";
 
 interface WizardState {
   step: number;
@@ -113,6 +124,13 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   }
 }
 
+const steps = [
+  { number: 1, title: "Cliente", icon: User },
+  { number: 2, title: "Destinatario", icon: MapPin },
+  { number: 3, title: "Paquetes", icon: Package },
+  { number: 4, title: "Pago", icon: CreditCard },
+];
+
 export function NuevaEncomiendaWizard() {
   const [state, dispatch] = useReducer(wizardReducer, initialState);
   const [showClienteModal, setShowClienteModal] = useState(false);
@@ -123,7 +141,6 @@ export function NuevaEncomiendaWizard() {
   const { profile } = useAuth();
   const navigate = useNavigate();
 
-  // Cargar sucursales al montar
   useEffect(() => {
     setLoadingSucursales(true);
     getAllSucursales()
@@ -167,7 +184,6 @@ export function NuevaEncomiendaWizard() {
   const handleSubmit = async () => {
     if (!profile) return;
 
-    // Validar que el perfil tenga los datos necesarios
     if (!profile.id) {
       toast.error(
         "No se pudo obtener el ID del empleado. Volvé a iniciar sesión.",
@@ -183,14 +199,12 @@ export function NuevaEncomiendaWizard() {
 
     setLoading(true);
     try {
-      // Generar número de guía único: GUI-YYYYMMDD-XXXXX
       const now = new Date();
       const datePart = now.toISOString().slice(0, 10).replace(/-/g, "");
       const randomPart = Math.floor(10000 + Math.random() * 90000);
       const nroGuia = `GUI-${datePart}-${randomPart}`;
 
-      // Las fechas deben estar en formato ISO 8601 completo
-      const fechaEmision = now.toISOString(); // esto está bien
+      const fechaEmision = now.toISOString();
       const [year, month, day] = state.fechaLimiteEntrega
         .split("-")
         .map(Number);
@@ -203,7 +217,6 @@ export function NuevaEncomiendaWizard() {
         Date.UTC(py, pm - 1, pd, 12, 0, 0),
       ).toISOString();
 
-      // 1. Crear encomienda con todos los campos requeridos
       const encomienda = await createEncomienda({
         nroGuia,
         fechaEmision,
@@ -212,12 +225,11 @@ export function NuevaEncomiendaWizard() {
         costoTotal,
         idCliente: state.cliente!.idCliente,
         idConsignatario: state.consignatario!.idConsignatario,
-        idEmpleado: profile.id, // ← del usuario logueado
-        idSucursalOrigen: profile.idSucursal, // ← sucursal del empleado
+        idEmpleado: profile.id,
+        idSucursalOrigen: profile.idSucursal,
         idSucursalDestino: state.sucursalDestino!.idSucursal,
       });
 
-      // 2. Crear detalles
       for (const detalle of state.detalles) {
         await createDetalle({
           descripcion: detalle.descripcion,
@@ -228,7 +240,6 @@ export function NuevaEncomiendaWizard() {
         });
       }
 
-      // 3. Pago solo si es en origen
       if (state.modalidadPago === "ORIGEN") {
         await createPago({
           monto: state.pagoMonto,
@@ -262,82 +273,134 @@ export function NuevaEncomiendaWizard() {
     });
   };
 
-  // Sucursales disponibles como destino (excluir la del empleado si está asignada)
   const sucursalesDestino = sucursales.filter(
     (s) => !s.eliminadoEn && s.idSucursal !== profile?.idSucursal,
   );
 
   const StepIndicator = () => (
-    <div className="mb-4">
-      <div className="progress" style={{ height: "2px" }}>
+    <div className="mb-5">
+      <div className="d-flex align-items-center justify-content-between position-relative">
+        {/* Línea conectora */}
         <div
-          className="progress-bar bg-primary"
-          style={{ width: `${(state.step / 4) * 100}%` }}
+          className="position-absolute"
+          style={{
+            top: "20px",
+            left: "calc(12.5% + 10px)",
+            right: "calc(12.5% + 10px)",
+            height: "2px",
+            backgroundColor: "#E5E0D8",
+            zIndex: 0,
+          }}
         />
-      </div>
-      <div className="d-flex justify-content-between mt-2">
-        {["Cliente", "Destinatario", "Paquetes", "Pago"].map((label, index) => (
-          <div key={label} className="text-center">
+        {steps.map((step) => {
+          const isCompleted = state.step > step.number;
+          const isActive = state.step === step.number;
+          const StepIcon = step.icon;
+
+          return (
             <div
-              className={`rounded-circle d-flex align-items-center justify-content-center mx-auto mb-1 ${
-                state.step > index + 1
-                  ? "bg-success"
-                  : state.step === index + 1
-                    ? "bg-primary"
-                    : "bg-secondary"
-              }`}
-              style={{ width: "30px", height: "30px", color: "white" }}
+              key={step.number}
+              className="d-flex flex-column align-items-center position-relative"
+              style={{ zIndex: 1, flex: 1 }}
             >
-              {state.step > index + 1 ? "✓" : index + 1}
+              <div
+                className="d-flex align-items-center justify-content-center"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  backgroundColor: isCompleted
+                    ? "#16A34A"
+                    : isActive
+                      ? "#8B1A1A"
+                      : "#FFFFFF",
+                  border: `2px solid ${
+                    isCompleted ? "#16A34A" : isActive ? "#8B1A1A" : "#E5E0D8"
+                  }`,
+                  transition: "all 0.3s ease",
+                }}
+              >
+                {isCompleted ? (
+                  <CheckCircle size={20} color="#FFFFFF" />
+                ) : (
+                  <StepIcon
+                    size={18}
+                    color={isActive ? "#FFFFFF" : "#9CA3AF"}
+                  />
+                )}
+              </div>
+              <span
+                className="mt-2 small fw-semibold"
+                style={{
+                  color: isActive
+                    ? "#8B1A1A"
+                    : isCompleted
+                      ? "#16A34A"
+                      : "#9CA3AF",
+                  fontSize: "0.7rem",
+                }}
+              >
+                {step.title}
+              </span>
             </div>
-            <small
-              className={
-                state.step === index + 1 ? "text-primary fw-bold" : "text-muted"
-              }
-            >
-              {label}
-            </small>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
-
   return (
-    <div className="container py-4">
-      <div className="card shadow-sm">
-        <div className="card-body">
+    <div className="container py-4" style={{ maxWidth: "900px" }}>
+      <div
+        className="rounded-4 overflow-hidden"
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "1px solid #E5E0D8",
+          borderRadius: "16px",
+        }}
+      >
+        <div className="p-4 p-md-5">
           <StepIndicator />
 
           {/* Paso 1: Cliente */}
           {state.step === 1 && (
-            <div>
-              <h4 className="mb-4">📋 Datos del Remitente</h4>
+            <div className="animate__animated animate__fadeIn">
+              <h4
+                className="mb-4 fw-bold"
+                style={{ color: "#1A1A1A", fontSize: "1.25rem" }}
+              >
+                Datos del Remitente
+              </h4>
               <ClienteSearchInput
                 onSelect={(cliente) =>
                   dispatch({ type: "SET_CLIENTE", payload: cliente })
                 }
               />
               <button
-                className="btn btn-link mt-2"
+                className="btn btn-link mt-2 p-0 d-flex align-items-center gap-1"
                 onClick={() => setShowClienteModal(true)}
+                style={{ color: "#8B1A1A", fontSize: "0.85rem" }}
               >
-                + Crear nuevo cliente
+                <Plus size={14} />
+                Crear nuevo cliente
               </button>
               {state.cliente && (
-                <div className="card mt-3 bg-light">
-                  <div className="card-body">
-                    <h6 className="mb-2">Cliente seleccionado:</h6>
-                    <p className="mb-1">
-                      <strong>{state.cliente.nombreRazonSocial}</strong>
-                    </p>
-                    <p className="mb-0 text-muted">
-                      {state.cliente.tipoCliente === "NATURAL"
-                        ? `CI: ${state.cliente.ci}`
-                        : `NIT: ${state.cliente.nit}`}{" "}
-                      | Tel: {state.cliente.telefono}
-                    </p>
-                  </div>
+                <div
+                  className="mt-3 p-3 rounded-3"
+                  style={{
+                    backgroundColor: "rgba(139, 26, 26, 0.04)",
+                    border: "1px solid rgba(139, 26, 26, 0.1)",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <p className="mb-0 fw-semibold">
+                    {state.cliente.nombreRazonSocial}
+                  </p>
+                  <small className="text-muted">
+                    {state.cliente.tipoCliente === "NATURAL"
+                      ? `CI: ${state.cliente.ci}`
+                      : `NIT: ${state.cliente.nit}`}{" "}
+                    | Tel: {state.cliente.telefono}
+                  </small>
                 </div>
               )}
             </div>
@@ -346,10 +409,17 @@ export function NuevaEncomiendaWizard() {
           {/* Paso 2: Consignatario y Ruta */}
           {state.step === 2 && (
             <div>
-              <h4 className="mb-4">📦 Destinatario y Ruta</h4>
+              <h4
+                className="mb-4 fw-bold"
+                style={{ color: "#1A1A1A", fontSize: "1.25rem" }}
+              >
+                Destinatario y Ruta
+              </h4>
 
               <div className="mb-4">
-                <label className="form-label fw-bold">Consignatario *</label>
+                <label className="form-label fw-semibold mb-2">
+                  Consignatario *
+                </label>
                 <ConsignatarioSearchInput
                   onSelect={(consignatario) =>
                     dispatch({
@@ -359,45 +429,58 @@ export function NuevaEncomiendaWizard() {
                   }
                 />
                 <button
-                  className="btn btn-link mt-2"
+                  className="btn btn-link mt-2 p-0 d-flex align-items-center gap-1"
                   onClick={() => setShowConsignatarioModal(true)}
+                  style={{ color: "#8B1A1A", fontSize: "0.85rem" }}
                 >
-                  + Crear nuevo consignatario
+                  <Plus size={14} />
+                  Crear nuevo consignatario
                 </button>
                 {state.consignatario && (
-                  <div className="card mt-2 bg-light">
-                    <div className="card-body">
-                      <h6 className="mb-2">Consignatario seleccionado:</h6>
-                      <p className="mb-1">
-                        <strong>{state.consignatario.nombres}</strong>
-                      </p>
-                      <p className="mb-0 text-muted">
-                        Tel: {state.consignatario.telefono}
-                      </p>
-                    </div>
+                  <div
+                    className="mt-2 p-3 rounded-3"
+                    style={{
+                      backgroundColor: "rgba(139, 26, 26, 0.04)",
+                      border: "1px solid rgba(139, 26, 26, 0.1)",
+                    }}
+                  >
+                    <p className="mb-0 fw-semibold">
+                      {state.consignatario.nombres}
+                    </p>
+                    <small className="text-muted">
+                      Tel: {state.consignatario.telefono}
+                    </small>
                   </div>
                 )}
               </div>
 
               <div className="mb-4">
-                <label className="form-label fw-bold">Sucursal de Origen</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={
-                    profile?.sucursal?.nombre
-                      ? `Sucursal ID: ${profile.sucursal.nombre}`
-                      : "No asignada"
-                  }
-                  disabled
-                />
+                <label className="form-label fw-semibold mb-2">
+                  Sucursal de Origen
+                </label>
+                <div
+                  className="p-3 rounded-3 d-flex align-items-center gap-2"
+                  style={{
+                    backgroundColor: "#F8F5F0",
+                    border: "1px solid #E5E0D8",
+                  }}
+                >
+                  <Building2 size={18} color="#8B1A1A" />
+                  <span>
+                    {profile?.sucursal?.nombre
+                      ? profile.sucursal.nombre
+                      : "No asignada"}
+                  </span>
+                </div>
                 <small className="text-muted">
                   Sucursal asignada a tu cuenta
                 </small>
               </div>
 
               <div className="mb-4">
-                <label className="form-label fw-bold">Sucursal Destino *</label>
+                <label className="form-label fw-semibold mb-2">
+                  Sucursal Destino *
+                </label>
                 {loadingSucursales ? (
                   <div className="text-muted">Cargando sucursales...</div>
                 ) : (
@@ -415,6 +498,11 @@ export function NuevaEncomiendaWizard() {
                           payload: sucursal,
                         });
                     }}
+                    style={{
+                      borderRadius: "10px",
+                      borderColor: "#E5E0D8",
+                      height: "45px",
+                    }}
                   >
                     <option value="">Seleccionar sucursal destino...</option>
                     {sucursalesDestino.map((s) => (
@@ -428,20 +516,35 @@ export function NuevaEncomiendaWizard() {
               </div>
             </div>
           )}
+
           {/* Paso 3: Ítems */}
           {state.step === 3 && (
             <div>
-              <h4 className="mb-4">📝 Ítems del Paquete</h4>
-              <div className="table-responsive">
-                <table className="table table-bordered">
-                  <thead className="table-light">
+              <h4
+                className="mb-4 fw-bold"
+                style={{ color: "#1A1A1A", fontSize: "1.25rem" }}
+              >
+                Ítems del Paquete
+              </h4>
+
+              <div className="table-responsive mb-4">
+                <table className="table">
+                  <thead style={{ backgroundColor: "#F8F5F0" }}>
                     <tr>
                       <th>Descripción</th>
-                      <th style={{ width: "100px" }}>Cantidad</th>
-                      <th style={{ width: "100px" }}>Peso (kg)</th>
-                      <th style={{ width: "120px" }}>Costo Flete</th>
-                      <th style={{ width: "100px" }}>Subtotal</th>
-                      <th style={{ width: "60px" }}></th>
+                      <th style={{ width: "90px" }} className="text-center">
+                        Cant.
+                      </th>
+                      <th style={{ width: "100px" }} className="text-center">
+                        Peso (kg)
+                      </th>
+                      <th style={{ width: "120px" }} className="text-end">
+                        Costo Flete
+                      </th>
+                      <th style={{ width: "100px" }} className="text-end">
+                        Subtotal
+                      </th>
+                      <th style={{ width: "50px" }}></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -450,7 +553,8 @@ export function NuevaEncomiendaWizard() {
                         <td>
                           <input
                             type="text"
-                            className="form-control"
+                            className="form-control form-control-sm"
+                            placeholder="Descripción"
                             value={detalle.descripcion}
                             onChange={(e) =>
                               dispatch({
@@ -461,12 +565,16 @@ export function NuevaEncomiendaWizard() {
                                 },
                               })
                             }
+                            style={{
+                              borderRadius: "8px",
+                              borderColor: "#E5E0D8",
+                            }}
                           />
                         </td>
                         <td>
                           <input
                             type="number"
-                            className="form-control"
+                            className="form-control form-control-sm text-center"
                             min="1"
                             value={detalle.cantidad}
                             onChange={(e) =>
@@ -480,12 +588,16 @@ export function NuevaEncomiendaWizard() {
                                 },
                               })
                             }
+                            style={{
+                              borderRadius: "8px",
+                              borderColor: "#E5E0D8",
+                            }}
                           />
                         </td>
                         <td>
                           <input
                             type="number"
-                            className="form-control"
+                            className="form-control form-control-sm text-center"
                             step="0.1"
                             min="0"
                             value={detalle.pesoKg}
@@ -500,12 +612,16 @@ export function NuevaEncomiendaWizard() {
                                 },
                               })
                             }
+                            style={{
+                              borderRadius: "8px",
+                              borderColor: "#E5E0D8",
+                            }}
                           />
                         </td>
                         <td>
                           <input
                             type="number"
-                            className="form-control"
+                            className="form-control form-control-sm text-end"
                             step="0.01"
                             min="0"
                             value={detalle.costoFlete}
@@ -520,23 +636,28 @@ export function NuevaEncomiendaWizard() {
                                 },
                               })
                             }
+                            style={{
+                              borderRadius: "8px",
+                              borderColor: "#E5E0D8",
+                            }}
                           />
                         </td>
-                        <td className="text-end">
+                        <td className="text-end fw-semibold">
                           Bs.{" "}
                           {(detalle.cantidad * detalle.costoFlete).toFixed(2)}
                         </td>
                         <td className="text-center">
                           <button
-                            className="btn btn-sm btn-danger"
+                            className="btn p-0"
                             onClick={() =>
                               dispatch({
                                 type: "REMOVE_DETALLE",
                                 payload: index,
                               })
                             }
+                            style={{ color: "#DC2626" }}
                           >
-                            🗑️
+                            <Trash2 size={16} />
                           </button>
                         </td>
                       </tr>
@@ -546,14 +667,23 @@ export function NuevaEncomiendaWizard() {
               </div>
 
               <button
-                className="btn btn-outline-primary mb-4"
+                className="btn mb-4 d-flex align-items-center gap-2"
                 onClick={addDetalle}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "1px dashed #8B1A1A",
+                  borderRadius: "10px",
+                  color: "#8B1A1A",
+                  padding: "0.5rem 1rem",
+                }}
               >
-                + Agregar Ítem
+                <Plus size={16} />
+                Agregar Ítem
               </button>
 
               <div className="mb-4">
-                <label className="form-label fw-bold">
+                <label className="form-label fw-semibold mb-2 d-flex align-items-center gap-2">
+                  <Calendar size={16} />
                   Fecha Límite de Entrega *
                 </label>
                 <input
@@ -567,15 +697,23 @@ export function NuevaEncomiendaWizard() {
                       payload: e.target.value,
                     })
                   }
+                  style={{
+                    borderRadius: "10px",
+                    borderColor: "#E5E0D8",
+                    maxWidth: "250px",
+                  }}
                 />
               </div>
 
               <div className="mb-4">
-                <label className="form-label fw-bold">Observaciones</label>
+                <label className="form-label fw-semibold mb-2">
+                  Observaciones
+                </label>
                 <textarea
                   className="form-control"
                   rows={3}
                   maxLength={500}
+                  placeholder="Información adicional sobre el envío..."
                   value={state.observaciones}
                   onChange={(e) =>
                     dispatch({
@@ -583,14 +721,23 @@ export function NuevaEncomiendaWizard() {
                       payload: e.target.value,
                     })
                   }
+                  style={{ borderRadius: "10px", borderColor: "#E5E0D8" }}
                 />
                 <small className="text-muted">
                   {state.observaciones.length}/500 caracteres
                 </small>
               </div>
 
-              <div className="alert alert-info">
-                <h6>Resumen del envío:</h6>
+              <div
+                className="p-3 rounded-3"
+                style={{
+                  backgroundColor: "rgba(212, 160, 23, 0.08)",
+                  border: "1px solid rgba(212, 160, 23, 0.2)",
+                }}
+              >
+                <h6 className="fw-semibold mb-2" style={{ color: "#D4A017" }}>
+                  Resumen del envío
+                </h6>
                 <p className="mb-0">
                   Peso total:{" "}
                   {state.detalles
@@ -598,7 +745,7 @@ export function NuevaEncomiendaWizard() {
                     .toFixed(2)}{" "}
                   kg
                   <br />
-                  Costo total: Bs. {costoTotal.toFixed(2)}
+                  Costo total: <strong>Bs. {costoTotal.toFixed(2)}</strong>
                 </p>
               </div>
             </div>
@@ -607,29 +754,76 @@ export function NuevaEncomiendaWizard() {
           {/* Paso 4: Pago */}
           {state.step === 4 && (
             <div>
-              <h4 className="mb-4">💳 Modalidad de Pago</h4>
+              <h4
+                className="mb-4 fw-bold"
+                style={{ color: "#1A1A1A", fontSize: "1.25rem" }}
+              >
+                Modalidad de Pago
+              </h4>
 
               <div className="mb-4">
-                <div className="btn-group w-100">
+                <div className="d-flex gap-3">
                   <button
-                    className={`btn ${state.modalidadPago === "ORIGEN" ? "btn-primary" : "btn-outline-primary"}`}
+                    className={`btn flex-1 d-flex align-items-center justify-content-center gap-2 ${
+                      state.modalidadPago === "ORIGEN"
+                        ? "btn-primary"
+                        : "btn-outline-secondary"
+                    }`}
                     onClick={() =>
                       dispatch({
                         type: "SET_MODALIDAD_PAGO",
                         payload: "ORIGEN",
                       })
                     }
+                    style={{
+                      backgroundColor:
+                        state.modalidadPago === "ORIGEN"
+                          ? "#8B1A1A"
+                          : "transparent",
+                      borderColor:
+                        state.modalidadPago === "ORIGEN"
+                          ? "#8B1A1A"
+                          : "#E5E0D8",
+                      color:
+                        state.modalidadPago === "ORIGEN"
+                          ? "#FFFFFF"
+                          : "#6B7280",
+                      borderRadius: "10px",
+                      padding: "0.75rem",
+                      flex: 1,
+                    }}
                   >
                     💰 Pago en origen
                   </button>
                   <button
-                    className={`btn ${state.modalidadPago === "DESTINO" ? "btn-primary" : "btn-outline-primary"}`}
+                    className={`btn flex-1 d-flex align-items-center justify-content-center gap-2 ${
+                      state.modalidadPago === "DESTINO"
+                        ? "btn-primary"
+                        : "btn-outline-secondary"
+                    }`}
                     onClick={() =>
                       dispatch({
                         type: "SET_MODALIDAD_PAGO",
                         payload: "DESTINO",
                       })
                     }
+                    style={{
+                      backgroundColor:
+                        state.modalidadPago === "DESTINO"
+                          ? "#8B1A1A"
+                          : "transparent",
+                      borderColor:
+                        state.modalidadPago === "DESTINO"
+                          ? "#8B1A1A"
+                          : "#E5E0D8",
+                      color:
+                        state.modalidadPago === "DESTINO"
+                          ? "#FFFFFF"
+                          : "#6B7280",
+                      borderRadius: "10px",
+                      padding: "0.75rem",
+                      flex: 1,
+                    }}
                   >
                     🎯 Pago en destino
                   </button>
@@ -637,9 +831,11 @@ export function NuevaEncomiendaWizard() {
               </div>
 
               {state.modalidadPago === "ORIGEN" && (
-                <div>
+                <div className="animate__animated animate__fadeIn">
                   <div className="mb-3">
-                    <label className="form-label fw-bold">Monto *</label>
+                    <label className="form-label fw-semibold mb-2">
+                      Monto *
+                    </label>
                     <input
                       type="number"
                       className="form-control"
@@ -652,14 +848,19 @@ export function NuevaEncomiendaWizard() {
                           payload: parseFloat(e.target.value) || 0,
                         })
                       }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "45px",
+                      }}
                     />
                     <small className="text-muted">
-                      Costo total: Bs. {costoTotal.toFixed(2)}
+                      Costo total de la encomienda: Bs. {costoTotal.toFixed(2)}
                     </small>
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label fw-bold">
+                    <label className="form-label fw-semibold mb-2">
                       Método de Pago *
                     </label>
                     <select
@@ -671,6 +872,11 @@ export function NuevaEncomiendaWizard() {
                           payload: e.target.value as MetodoPago,
                         })
                       }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "45px",
+                      }}
                     >
                       <option value="">Seleccionar método...</option>
                       {METODOS_PAGO.map((m) => (
@@ -682,10 +888,13 @@ export function NuevaEncomiendaWizard() {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label fw-bold">Referencia</label>
+                    <label className="form-label fw-semibold mb-2">
+                      Referencia (opcional)
+                    </label>
                     <input
                       type="text"
                       className="form-control"
+                      placeholder="Número de operación, voucher, etc."
                       value={state.pagoReferencia}
                       onChange={(e) =>
                         dispatch({
@@ -693,11 +902,18 @@ export function NuevaEncomiendaWizard() {
                           payload: e.target.value,
                         })
                       }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "45px",
+                      }}
                     />
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label fw-bold">Fecha de Pago</label>
+                    <label className="form-label fw-semibold mb-2">
+                      Fecha de Pago
+                    </label>
                     <input
                       type="date"
                       className="form-control"
@@ -708,32 +924,40 @@ export function NuevaEncomiendaWizard() {
                           payload: e.target.value,
                         })
                       }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        maxWidth: "200px",
+                      }}
                     />
                   </div>
                 </div>
               )}
 
-              <div className="alert alert-success mt-4">
-                <h6>Resumen final:</h6>
-                <p>
+              <div
+                className="p-3 rounded-3 mt-4"
+                style={{
+                  backgroundColor: "rgba(22, 163, 74, 0.08)",
+                  border: "1px solid rgba(22, 163, 74, 0.2)",
+                }}
+              >
+                <h6 className="fw-semibold mb-2" style={{ color: "#16A34A" }}>
+                  Resumen final
+                </h6>
+                <p className="mb-1">
                   <strong>Cliente:</strong> {state.cliente?.nombreRazonSocial}
                 </p>
-                <p>
+                <p className="mb-1">
                   <strong>Consignatario:</strong> {state.consignatario?.nombres}
                 </p>
-                <p>
-                  <strong>Ruta:</strong>{" "}
-                  {profile?.sucursal
-                    ? `${profile.sucursal.nombre} — ${profile.sucursal.ciudad || profile.sucursal.direccion || ""}`
-                    : profile?.idSucursal
-                      ? `Sucursal ${profile.idSucursal}`
-                      : "Origen"}{" "}
+                <p className="mb-1">
+                  <strong>Ruta:</strong> {profile?.sucursal?.nombre || "Origen"}{" "}
                   → {state.sucursalDestino?.nombre}
                 </p>
-                <p>
+                <p className="mb-1">
                   <strong>Costo total:</strong> Bs. {costoTotal.toFixed(2)}
                 </p>
-                <p>
+                <p className="mb-0">
                   <strong>Modalidad:</strong>{" "}
                   {state.modalidadPago === "ORIGEN"
                     ? "Pago en origen"
@@ -744,42 +968,70 @@ export function NuevaEncomiendaWizard() {
           )}
 
           {/* Navegación */}
-          <div className="d-flex justify-content-between mt-4">
+          <div className="d-flex justify-content-between mt-5 pt-3">
             <button
-              className="btn btn-secondary"
+              className="btn d-flex align-items-center gap-2"
               onClick={() =>
                 dispatch({ type: "SET_STEP", payload: state.step - 1 })
               }
               disabled={state.step === 1}
+              style={{
+                backgroundColor: "transparent",
+                border: "1px solid #E5E0D8",
+                borderRadius: "10px",
+                padding: "0.5rem 1.25rem",
+                color: "#6B7280",
+                opacity: state.step === 1 ? 0.5 : 1,
+              }}
             >
               ← Anterior
             </button>
             {state.step < 4 ? (
               <button
-                className="btn btn-primary"
+                className="btn d-flex align-items-center gap-2"
                 onClick={() =>
                   dispatch({ type: "SET_STEP", payload: state.step + 1 })
                 }
                 disabled={!canNext()}
+                style={{
+                  backgroundColor: "#8B1A1A",
+                  border: "none",
+                  borderRadius: "10px",
+                  padding: "0.5rem 1.25rem",
+                  color: "#FFFFFF",
+                  opacity: canNext() ? 1 : 0.5,
+                }}
               >
-                Siguiente →
+                Siguiente
+                <ChevronRight size={16} />
               </button>
             ) : (
               <button
-                className="btn btn-success"
+                className="btn d-flex align-items-center gap-2"
                 onClick={handleSubmit}
                 disabled={!canNext() || loading}
+                style={{
+                  backgroundColor: "#16A34A",
+                  border: "none",
+                  borderRadius: "10px",
+                  padding: "0.5rem 1.25rem",
+                  color: "#FFFFFF",
+                  opacity: canNext() && !loading ? 1 : 0.5,
+                }}
               >
                 {loading ? (
                   <>
                     <span
-                      className="spinner-border spinner-border-sm me-2"
+                      className="spinner-border spinner-border-sm"
                       role="status"
                     />
                     Registrando...
                   </>
                 ) : (
-                  "✅ Confirmar y Registrar"
+                  <>
+                    <CheckCircle size={16} />
+                    Confirmar y Registrar
+                  </>
                 )}
               </button>
             )}
