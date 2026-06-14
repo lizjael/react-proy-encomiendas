@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-toastify/dist/ReactToastify.css";
+import "./styles/global.css"; // <-- AGREGAR ESTA LÍNEA
 
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppRouter } from "./routes/AppRouter";

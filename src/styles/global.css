@@ -1,0 +1,325 @@
+/* src/styles/global.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Poppins:wght@400;500;600;700;800&display=swap");
+
+/* ============================================
+   DECLARACIÓN DE CSS CUSTOM PROPERTIES
+   ============================================ */
+:root {
+  --color-primary: #8b1a1a;
+  --color-primary-dark: #5c0e0e;
+  --color-primary-light: #c0392b;
+  --color-accent: #d4a017;
+  --color-dark: #1a1a1a;
+  --color-surface: #f8f5f0;
+  --color-surface-card: #ffffff;
+  --color-text: #2d2d2d;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e0d8;
+}
+
+/* ============================================
+   SOBRESCRITURA DE VARIABLES DE BOOTSTRAP
+   ============================================ */
+:root {
+  --bs-primary: var(--color-primary);
+  --bs-primary-rgb: 139, 26, 26;
+  --bs-primary-dark: var(--color-primary-dark);
+  --bs-primary-light: var(--color-primary-light);
+  --bs-body-bg: var(--color-surface);
+  --bs-body-color: var(--color-text);
+  --bs-border-color: var(--color-border);
+}
+
+/* Botones primary */
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--color-primary-dark) !important;
+  border-color: var(--color-primary-dark) !important;
+}
+
+.btn-primary:active {
+  background-color: var(--color-primary-dark) !important;
+  border-color: var(--color-primary-dark) !important;
+}
+
+.btn-outline-primary {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+/* Fondo primary */
+.bg-primary {
+  background-color: var(--color-primary) !important;
+}
+
+/* Texto primary */
+.text-primary {
+  color: var(--color-primary) !important;
+}
+
+/* Border primary */
+.border-primary {
+  border-color: var(--color-primary) !important;
+}
+
+/* Badge primary */
+.badge.bg-primary {
+  background-color: var(--color-primary) !important;
+}
+
+/* ============================================
+   ESTILOS GLOBALES DEL BODY
+   ============================================ */
+body {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Tipografía para títulos */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.display-5,
+.display-6,
+.card-title,
+.modal-title {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+}
+
+/* ============================================
+   SCROLLBAR PERSONALIZADO
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-dark);
+}
+
+/* Para Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) var(--color-border);
+}
+
+/* ============================================
+   TRANSICIONES SUAVES
+   ============================================ */
+a,
+button,
+.btn,
+.nav-link,
+.form-control,
+.card {
+  transition: all 0.2s ease;
+}
+
+a:hover,
+button:hover {
+  transition: all 0.2s ease;
+}
+
+/* ============================================
+   FOCUS RING PERSONALIZADO
+   ============================================ */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.nav-link:focus {
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.25);
+  border-color: var(--color-primary);
+}
+
+/* ============================================
+   CLASES UTILITARIAS PROPIAS
+   ============================================ */
+
+/* Botón estilo Tupiza */
+.btn-tupiza {
+  background-color: var(--color-primary);
+  border: none;
+  color: white;
+  font-weight: 500;
+  padding: 0.625rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-tupiza:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: white;
+}
+
+.btn-tupiza:active {
+  transform: translateY(0);
+}
+
+.btn-tupiza:disabled,
+.btn-tupiza.disabled {
+  background-color: var(--color-text-muted);
+  opacity: 0.6;
+  transform: none;
+}
+
+/* Tarjeta moderna */
+.card-modern {
+  background: var(--color-surface-card);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.card-modern:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Texto con color dorado/accent */
+.text-accent {
+  color: var(--color-accent) !important;
+}
+
+/* Badge con estilo personalizado */
+.badge-tupiza {
+  background-color: var(--color-primary-light);
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ============================================
+   ESTILOS ADICIONALES PARA MEJORAR BOOTSTRAP
+   ============================================ */
+
+/* Navbar personalizada (opcional, para mantener consistencia) */
+.navbar {
+  background-color: var(--color-surface-card);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Cards de Bootstrap mejoradas */
+.card {
+  border-radius: 12px;
+  border-color: var(--color-border);
+}
+
+/* Botones outline personalizados */
+.btn-outline-tupiza {
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  border-radius: 8px;
+  padding: 0.625rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-tupiza:hover {
+  background-color: var(--color-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Tablas mejoradas */
+.table {
+  border-color: var(--color-border);
+}
+
+.table thead th {
+  background-color: var(--color-surface);
+  border-bottom: 2px solid var(--color-primary);
+  color: var(--color-dark);
+  font-weight: 600;
+}
+
+/* Alertas personalizadas */
+.alert-primary {
+  background-color: rgba(139, 26, 26, 0.1);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+
+/* Dropdown items */
+.dropdown-item:active {
+  background-color: var(--color-primary);
+}
+
+.dropdown-item:focus {
+  background-color: var(--color-primary-light);
+  color: white;
+}
+
+/* Paginación */
+.page-item.active .page-link {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.page-link {
+  color: var(--color-primary);
+}
+
+.page-link:hover {
+  color: var(--color-primary-dark);
+}
