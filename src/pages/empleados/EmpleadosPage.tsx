@@ -1,4 +1,3 @@
-// src/pages/empleados/EmpleadosPage.tsx
 import { useState } from "react";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { DataTable } from "../../components/ui/DataTable";
@@ -15,6 +14,18 @@ import {
 import { getAllSucursales } from "../../api/endpoints/sucursales.api";
 import type { UserProfile, Sucursal } from "../../types";
 import { toast } from "react-toastify";
+import {
+  Users,
+  UserPlus,
+  Search,
+  Filter,
+  X,
+  Save,
+  UserCog,
+  Shield,
+  Phone,
+  Building2,
+} from "lucide-react";
 
 export function EmpleadosPage() {
   const { user: currentUser } = useAuth();
@@ -29,6 +40,8 @@ export function EmpleadosPage() {
   const [selectedToAssign, setSelectedToAssign] = useState<UserProfile | null>(
     null,
   );
+  const [filtroRol, setFiltroRol] = useState<string>("TODOS");
+  const [filtroSucursal, setFiltroSucursal] = useState<string>("TODOS");
 
   const [editForm, setEditForm] = useState({
     nombres: "",
@@ -40,7 +53,7 @@ export function EmpleadosPage() {
     horaSalida: "",
     fechaContratacion: "",
     idSucursal: "",
-    estado: "Activo", // ✅ antes era activo: true
+    estado: "Activo",
   });
 
   const [createForm, setCreateForm] = useState({
@@ -69,11 +82,19 @@ export function EmpleadosPage() {
     deleteFn: deleteUser,
   });
 
-  // Super admin ve admins y empleados; admin ve solo empleados de su sucursal
   const visibleUsers =
     currentUser?.role === "super_admin"
       ? data.filter((u) => u.role !== "super_admin")
       : data.filter((u) => u.role === "user");
+
+  const filteredUsers = visibleUsers.filter((user) => {
+    if (filtroRol !== "TODOS" && user.role !== filtroRol) return false;
+    if (filtroSucursal !== "TODOS") {
+      const sucursalId = parseInt(filtroSucursal);
+      if (user.idSucursal !== sucursalId) return false;
+    }
+    return true;
+  });
 
   const loadSucursales = async () => {
     if (sucursales.length === 0) {
@@ -103,7 +124,6 @@ export function EmpleadosPage() {
   const handleSaveEdit = async () => {
     if (!selectedItem) return;
 
-    // ✅ Confirma que activo llega como booleano real
     const payload = {
       nombres: editForm.nombres || undefined,
       apellidos: editForm.apellidos || undefined,
@@ -116,10 +136,8 @@ export function EmpleadosPage() {
       idSucursal: editForm.idSucursal
         ? parseInt(editForm.idSucursal)
         : undefined,
-      estado: editForm.estado ?? "", // ✅ forzar booleano explícito
+      estado: editForm.estado ?? "",
     };
-
-    console.log("Enviando payload:", payload); // quita esto después de probar
 
     try {
       await updateUserProfile(selectedItem.id, payload);
@@ -145,7 +163,6 @@ export function EmpleadosPage() {
     }
   };
 
-  // Buscar empleado por email para asignar a sucursal (admin)
   const handleSearchEmail = () => {
     const found = data.filter(
       (u) =>
@@ -188,7 +205,6 @@ export function EmpleadosPage() {
         idSucursal: asignarForm.idSucursal
           ? parseInt(asignarForm.idSucursal)
           : undefined,
-
         estado: asignarForm.estado || undefined,
       });
       toast.success("Empleado asignado a sucursal correctamente");
@@ -200,38 +216,101 @@ export function EmpleadosPage() {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const columns = [
+    {
+      key: "avatar",
+      label: "",
+      render: (row: UserProfile) => (
+        <div
+          className="rounded-circle d-flex align-items-center justify-content-center"
+          style={{
+            width: "36px",
+            height: "36px",
+            backgroundColor: "#8B1A1A",
+            fontSize: "12px",
+            fontWeight: 600,
+            color: "#FFFFFF",
+          }}
+        >
+          {getInitials(row.name)}
+        </div>
+      ),
+    },
     { key: "name", label: "Nombre" },
     { key: "email", label: "Email" },
     {
       key: "role",
       label: "Rol",
-      render: (row: UserProfile) => (
-        <span
-          className={`badge ${row.role === "admin" ? "bg-warning text-dark" : "bg-secondary"}`}
-        >
-          {row.role === "admin" ? "Admin" : "Empleado"}
-        </span>
-      ),
+      render: (row: UserProfile) => {
+        const roleConfig = {
+          admin: {
+            label: "Administrador",
+            color: "#D4A017",
+            bg: "rgba(212, 160, 23, 0.1)",
+          },
+          user: {
+            label: "Empleado",
+            color: "#6B7280",
+            bg: "rgba(107, 114, 128, 0.1)",
+          },
+          super_admin: {
+            label: "Super Admin",
+            color: "#8B1A1A",
+            bg: "rgba(139, 26, 26, 0.1)",
+          },
+        };
+        const config = roleConfig[row.role];
+        return (
+          <span
+            className="badge rounded-pill px-3 py-1"
+            style={{
+              backgroundColor: config.bg,
+              color: config.color,
+              fontSize: "0.7rem",
+            }}
+          >
+            {config.label}
+          </span>
+        );
+      },
     },
-    { key: "ci", label: "CI" },
-    { key: "turno", label: "Turno" },
+    { key: "ci", label: "CI", mobileHidden: true },
+    { key: "turno", label: "Turno", mobileHidden: true },
     {
       key: "idSucursal",
       label: "Sucursal",
       render: (row: UserProfile) =>
-        row.sucursal?.ciudad ?? (row.idSucursal ? `ID ${row.idSucursal}` : "-"),
+        row.sucursal?.nombre ?? (row.idSucursal ? `ID ${row.idSucursal}` : "-"),
+      mobileHidden: true,
     },
     {
       key: "estado",
       label: "Estado",
       render: (row: UserProfile) => (
         <span
-          className={`badge ${row.estado === "Activo" ? "bg-success" : "bg-danger"}`}
+          className="badge rounded-pill px-3 py-1"
+          style={{
+            backgroundColor:
+              row.estado === "Activo"
+                ? "rgba(22, 163, 74, 0.1)"
+                : "rgba(220, 38, 38, 0.1)",
+            color: row.estado === "Activo" ? "#16A34A" : "#DC2626",
+            fontSize: "0.7rem",
+          }}
         >
-          {row.estado ?? "Inactivo"}
+          {row.estado ?? "Activo"}
         </span>
       ),
+      mobileHidden: true,
     },
   ];
 
@@ -243,43 +322,184 @@ export function EmpleadosPage() {
     );
   }
 
+  const sucursalesUnicas = Array.from(
+    new Map(
+      visibleUsers
+        .filter((u) => u.sucursal)
+        .map((u) => [u.sucursal!.idSucursal, u.sucursal]),
+    ).values(),
+  );
+
   return (
     <div className="container-fluid px-0">
       <PageHeader
         title="Empleados"
         subtitle="Gestión de personal de la empresa"
+        icon={<Users size={24} />}
         action={
           <div className="d-flex gap-2">
-            {/* Super admin puede crear usuarios con cualquier rol */}
             {currentUser?.role === "super_admin" && (
               <button
-                className="btn btn-primary"
+                className="btn d-flex align-items-center gap-2"
                 onClick={() => setShowCreateModal(true)}
+                style={{
+                  backgroundColor: "#8B1A1A",
+                  border: "none",
+                  borderRadius: "10px",
+                  padding: "0.5rem 1.25rem",
+                  color: "#FFFFFF",
+                  fontWeight: 500,
+                  fontSize: "0.85rem",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#5C0E0E";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#8B1A1A";
+                }}
               >
-                + Nuevo Usuario
+                <UserPlus size={18} />
+                Nuevo Usuario
               </button>
             )}
-            {/* Admin puede asignar empleados a su sucursal */}
             {currentUser?.role === "admin" && (
               <button
-                className="btn btn-success"
+                className="btn d-flex align-items-center gap-2"
                 onClick={async () => {
                   await loadSucursales();
                   setShowAsignarModal(true);
                 }}
+                style={{
+                  backgroundColor: "#D4A017",
+                  border: "none",
+                  borderRadius: "10px",
+                  padding: "0.5rem 1.25rem",
+                  color: "#1A1A1A",
+                  fontWeight: 500,
+                  fontSize: "0.85rem",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#C0392B";
+                  e.currentTarget.style.color = "#FFFFFF";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#D4A017";
+                  e.currentTarget.style.color = "#1A1A1A";
+                }}
               >
-                + Agregar Empleado a mi Sucursal
+                <UserCog size={18} />
+                Agregar a mi Sucursal
               </button>
             )}
           </div>
         }
       />
 
-      <div className="card shadow-sm">
-        <div className="card-body">
+      {/* Filtros */}
+      <div
+        className="rounded-3 mb-4 p-4"
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "1px solid #E5E0D8",
+          borderRadius: "12px",
+        }}
+      >
+        <div className="row g-3">
+          <div className="col-md-4">
+            <label
+              className="form-label fw-semibold mb-2"
+              style={{ color: "#374151", fontSize: "0.75rem" }}
+            >
+              <Filter size={14} className="me-1" />
+              Filtrar por Rol
+            </label>
+            <select
+              className="form-select"
+              value={filtroRol}
+              onChange={(e) => setFiltroRol(e.target.value)}
+              style={{
+                borderRadius: "10px",
+                borderColor: "#E5E0D8",
+                height: "42px",
+                fontSize: "0.85rem",
+              }}
+            >
+              <option value="TODOS">Todos los roles</option>
+              <option value="admin">Administradores</option>
+              <option value="user">Empleados</option>
+            </select>
+          </div>
+          <div className="col-md-4">
+            <label
+              className="form-label fw-semibold mb-2"
+              style={{ color: "#374151", fontSize: "0.75rem" }}
+            >
+              <Building2 size={14} className="me-1" />
+              Filtrar por Sucursal
+            </label>
+            <select
+              className="form-select"
+              value={filtroSucursal}
+              onChange={(e) => setFiltroSucursal(e.target.value)}
+              style={{
+                borderRadius: "10px",
+                borderColor: "#E5E0D8",
+                height: "42px",
+                fontSize: "0.85rem",
+              }}
+            >
+              <option value="TODOS">Todas las sucursales</option>
+              {sucursalesUnicas.map((sucursal) => (
+                <option key={sucursal!.idSucursal} value={sucursal!.idSucursal}>
+                  {sucursal!.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-md-4">
+            <label
+              className="form-label fw-semibold mb-2"
+              style={{ color: "#374151", fontSize: "0.75rem" }}
+            >
+              &nbsp;
+            </label>
+            <button
+              className="btn w-100 d-flex align-items-center justify-content-center gap-2"
+              onClick={() => {
+                setFiltroRol("TODOS");
+                setFiltroSucursal("TODOS");
+              }}
+              style={{
+                backgroundColor: "#F8F5F0",
+                border: "1px solid #E5E0D8",
+                borderRadius: "10px",
+                height: "42px",
+                color: "#6B7280",
+                fontSize: "0.85rem",
+              }}
+            >
+              <X size={16} />
+              Limpiar filtros
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <div
+        className="rounded-3 overflow-hidden"
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "1px solid #E5E0D8",
+          borderRadius: "12px",
+        }}
+      >
+        <div className="p-0">
           <DataTable
             columns={columns}
-            data={visibleUsers}
+            data={filteredUsers}
             loading={loading}
             onEdit={canEdit("empleados") ? handleEdit : undefined}
             onDelete={
@@ -301,40 +521,165 @@ export function EmpleadosPage() {
       {showEditModal && (
         <div
           className="modal show d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          tabIndex={-1}
+          style={{
+            backgroundColor: "rgba(0,0,0,0.6)",
+            zIndex: 1050,
+            animation: "fadeIn 0.2s ease",
+          }}
         >
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Editar Perfil</h5>
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div
+              className="modal-content"
+              style={{
+                borderRadius: "16px",
+                border: "none",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                className="modal-header border-0"
+                style={{
+                  backgroundColor: "#1A1A1A",
+                  padding: "1.25rem 1.5rem",
+                }}
+              >
+                <h5
+                  className="modal-title fw-semibold d-flex align-items-center gap-2"
+                  style={{ color: "#FFFFFF" }}
+                >
+                  <UserCog size={20} />
+                  Editar Perfil de Empleado
+                </h5>
                 <button
-                  className="btn-close"
+                  type="button"
+                  className="btn p-0"
                   onClick={() => setShowEditModal(false)}
-                />
+                  style={{ color: "#FFFFFF", opacity: 0.7 }}
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <div className="modal-body">
+              <div
+                className="modal-body p-4"
+                style={{ backgroundColor: "#F8F5F0" }}
+              >
                 <div className="row g-3">
-                  {[
-                    { label: "Nombres", key: "nombres" },
-                    { label: "Apellidos", key: "apellidos" },
-                    { label: "CI", key: "ci" },
-                    { label: "Teléfono", key: "telefono" },
-                    { label: "Turno", key: "turno" },
-                  ].map(({ label, key }) => (
-                    <div className="col-md-6" key={key}>
-                      <label className="form-label">{label}</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={(editForm as any)[key]}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, [key]: e.target.value })
-                        }
-                      />
-                    </div>
-                  ))}
+                  <div className="col-md-6">
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      Nombres
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editForm.nombres}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, nombres: e.target.value })
+                      }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      Apellidos
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editForm.apellidos}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, apellidos: e.target.value })
+                      }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      CI
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editForm.ci}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, ci: e.target.value })
+                      }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      <Phone size={14} className="me-1" />
+                      Teléfono
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editForm.telefono}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, telefono: e.target.value })
+                      }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      Turno
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Ej: Mañana, Tarde"
+                      value={editForm.turno}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, turno: e.target.value })
+                      }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
+                    />
+                  </div>
                   <div className="col-md-3">
-                    <label className="form-label">Hora Entrada</label>
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      Hora Entrada
+                    </label>
                     <input
                       type="time"
                       className="form-control"
@@ -345,10 +690,20 @@ export function EmpleadosPage() {
                           horaEntrada: e.target.value,
                         })
                       }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">Hora Salida</label>
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      Hora Salida
+                    </label>
                     <input
                       type="time"
                       className="form-control"
@@ -356,10 +711,20 @@ export function EmpleadosPage() {
                       onChange={(e) =>
                         setEditForm({ ...editForm, horaSalida: e.target.value })
                       }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">Fecha Contratación</label>
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      Fecha Contratación
+                    </label>
                     <input
                       type="date"
                       className="form-control"
@@ -370,29 +735,55 @@ export function EmpleadosPage() {
                           fechaContratacion: e.target.value,
                         })
                       }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">Estado</label>
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      Estado
+                    </label>
                     <select
                       className="form-select"
                       value={editForm.estado}
                       onChange={(e) =>
                         setEditForm({ ...editForm, estado: e.target.value })
                       }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
                     >
                       <option value="Activo">Activo</option>
                       <option value="Inactivo">Inactivo</option>
                     </select>
                   </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Sucursal</label>
+                  <div className="col-md-12">
+                    <label
+                      className="form-label fw-semibold"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      <Building2 size={14} className="me-1" />
+                      Sucursal
+                    </label>
                     <select
                       className="form-select"
                       value={editForm.idSucursal}
                       onChange={(e) =>
                         setEditForm({ ...editForm, idSucursal: e.target.value })
                       }
+                      style={{
+                        borderRadius: "10px",
+                        borderColor: "#E5E0D8",
+                        height: "42px",
+                      }}
                     >
                       <option value="">Sin sucursal</option>
                       {sucursales.map((s) => (
@@ -401,22 +792,38 @@ export function EmpleadosPage() {
                         </option>
                       ))}
                     </select>
-                    {currentUser?.role === "admin" && (
-                      <small className="text-muted">
-                        Puedes desasignar al empleado quitando la sucursal
-                      </small>
-                    )}
                   </div>
                 </div>
               </div>
-              <div className="modal-footer">
+              <div
+                className="modal-footer border-0"
+                style={{ backgroundColor: "#FFFFFF", padding: "1rem 1.5rem" }}
+              >
                 <button
-                  className="btn btn-secondary"
+                  className="btn"
                   onClick={() => setShowEditModal(false)}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "1px solid #E5E0D8",
+                    borderRadius: "10px",
+                    padding: "0.5rem 1.25rem",
+                    color: "#6B7280",
+                  }}
                 >
                   Cancelar
                 </button>
-                <button className="btn btn-primary" onClick={handleSaveEdit}>
+                <button
+                  className="btn d-flex align-items-center gap-2"
+                  onClick={handleSaveEdit}
+                  style={{
+                    backgroundColor: "#8B1A1A",
+                    border: "none",
+                    borderRadius: "10px",
+                    padding: "0.5rem 1.25rem",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  <Save size={16} />
                   Guardar Cambios
                 </button>
               </div>
@@ -425,24 +832,60 @@ export function EmpleadosPage() {
         </div>
       )}
 
-      {/* Modal CREAR usuario (solo super_admin) */}
+      {/* Modal CREAR usuario */}
       {showCreateModal && (
         <div
           className="modal show d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          tabIndex={-1}
+          style={{
+            backgroundColor: "rgba(0,0,0,0.6)",
+            zIndex: 1050,
+            animation: "fadeIn 0.2s ease",
+          }}
         >
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Nuevo Usuario</h5>
+          <div className="modal-dialog modal-dialog-centered">
+            <div
+              className="modal-content"
+              style={{
+                borderRadius: "16px",
+                border: "none",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                className="modal-header border-0"
+                style={{
+                  backgroundColor: "#1A1A1A",
+                  padding: "1.25rem 1.5rem",
+                }}
+              >
+                <h5
+                  className="modal-title fw-semibold"
+                  style={{ color: "#FFFFFF" }}
+                >
+                  Nuevo Usuario
+                </h5>
                 <button
-                  className="btn-close"
+                  type="button"
+                  className="btn p-0"
                   onClick={() => setShowCreateModal(false)}
-                />
+                  style={{ color: "#FFFFFF", opacity: 0.7 }}
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <div className="modal-body">
+              <div
+                className="modal-body p-4"
+                style={{ backgroundColor: "#F8F5F0" }}
+              >
                 <div className="mb-3">
-                  <label className="form-label">Nombre completo</label>
+                  <label
+                    className="form-label fw-semibold"
+                    style={{ fontSize: "0.8rem" }}
+                  >
+                    Nombre completo *
+                  </label>
                   <input
                     type="text"
                     className="form-control"
@@ -450,10 +893,20 @@ export function EmpleadosPage() {
                     onChange={(e) =>
                       setCreateForm({ ...createForm, name: e.target.value })
                     }
+                    style={{
+                      borderRadius: "10px",
+                      borderColor: "#E5E0D8",
+                      height: "42px",
+                    }}
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Email</label>
+                  <label
+                    className="form-label fw-semibold"
+                    style={{ fontSize: "0.8rem" }}
+                  >
+                    Email *
+                  </label>
                   <input
                     type="email"
                     className="form-control"
@@ -461,10 +914,20 @@ export function EmpleadosPage() {
                     onChange={(e) =>
                       setCreateForm({ ...createForm, email: e.target.value })
                     }
+                    style={{
+                      borderRadius: "10px",
+                      borderColor: "#E5E0D8",
+                      height: "42px",
+                    }}
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Contraseña</label>
+                  <label
+                    className="form-label fw-semibold"
+                    style={{ fontSize: "0.8rem" }}
+                  >
+                    Contraseña *
+                  </label>
                   <input
                     type="password"
                     className="form-control"
@@ -472,10 +935,21 @@ export function EmpleadosPage() {
                     onChange={(e) =>
                       setCreateForm({ ...createForm, password: e.target.value })
                     }
+                    style={{
+                      borderRadius: "10px",
+                      borderColor: "#E5E0D8",
+                      height: "42px",
+                    }}
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Rol</label>
+                  <label
+                    className="form-label fw-semibold"
+                    style={{ fontSize: "0.8rem" }}
+                  >
+                    <Shield size={14} className="me-1" />
+                    Rol *
+                  </label>
                   <select
                     className="form-select"
                     value={createForm.role}
@@ -485,21 +959,47 @@ export function EmpleadosPage() {
                         role: e.target.value as any,
                       })
                     }
+                    style={{
+                      borderRadius: "10px",
+                      borderColor: "#E5E0D8",
+                      height: "42px",
+                    }}
                   >
                     <option value="user">Empleado</option>
-                    <option value="admin">Admin</option>
-                    <option value="super_admin">Super Admin</option>
+                    <option value="admin">Administrador</option>
+                    <option value="super_admin">Super Administrador</option>
                   </select>
                 </div>
               </div>
-              <div className="modal-footer">
+              <div
+                className="modal-footer border-0"
+                style={{ backgroundColor: "#FFFFFF", padding: "1rem 1.5rem" }}
+              >
                 <button
-                  className="btn btn-secondary"
+                  className="btn"
                   onClick={() => setShowCreateModal(false)}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "1px solid #E5E0D8",
+                    borderRadius: "10px",
+                    padding: "0.5rem 1.25rem",
+                    color: "#6B7280",
+                  }}
                 >
                   Cancelar
                 </button>
-                <button className="btn btn-primary" onClick={handleCreate}>
+                <button
+                  className="btn d-flex align-items-center gap-2"
+                  onClick={handleCreate}
+                  style={{
+                    backgroundColor: "#8B1A1A",
+                    border: "none",
+                    borderRadius: "10px",
+                    padding: "0.5rem 1.25rem",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  <UserPlus size={16} />
                   Crear Usuario
                 </button>
               </div>
@@ -508,28 +1008,60 @@ export function EmpleadosPage() {
         </div>
       )}
 
-      {/* Modal ASIGNAR a sucursal (solo admin) */}
+      {/* Modal ASIGNAR a sucursal */}
       {showAsignarModal && (
         <div
           className="modal show d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          tabIndex={-1}
+          style={{
+            backgroundColor: "rgba(0,0,0,0.6)",
+            zIndex: 1050,
+            animation: "fadeIn 0.2s ease",
+          }}
         >
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Agregar Empleado a mi Sucursal</h5>
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div
+              className="modal-content"
+              style={{
+                borderRadius: "16px",
+                border: "none",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                className="modal-header border-0"
+                style={{
+                  backgroundColor: "#1A1A1A",
+                  padding: "1.25rem 1.5rem",
+                }}
+              >
+                <h5
+                  className="modal-title fw-semibold d-flex align-items-center gap-2"
+                  style={{ color: "#FFFFFF" }}
+                >
+                  <UserCog size={20} />
+                  Agregar Empleado a mi Sucursal
+                </h5>
                 <button
-                  className="btn-close"
+                  type="button"
+                  className="btn p-0"
                   onClick={() => {
                     setShowAsignarModal(false);
                     setSelectedToAssign(null);
                   }}
-                />
+                  style={{ color: "#FFFFFF", opacity: 0.7 }}
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <div className="modal-body">
+              <div
+                className="modal-body p-4"
+                style={{ backgroundColor: "#F8F5F0" }}
+              >
                 {!selectedToAssign ? (
                   <>
-                    <p className="text-muted">
+                    <p className="text-muted mb-3">
                       Busca al empleado por email para asignarlo a tu sucursal.
                     </p>
                     <div className="input-group mb-3">
@@ -542,22 +1074,37 @@ export function EmpleadosPage() {
                         onKeyDown={(e) =>
                           e.key === "Enter" && handleSearchEmail()
                         }
+                        style={{
+                          borderRadius: "10px 0 0 10px",
+                          borderColor: "#E5E0D8",
+                        }}
                       />
                       <button
-                        className="btn btn-outline-primary"
+                        className="btn d-flex align-items-center gap-2"
                         onClick={handleSearchEmail}
+                        style={{
+                          backgroundColor: "#8B1A1A",
+                          border: "none",
+                          borderRadius: "0 10px 10px 0",
+                          color: "#FFFFFF",
+                        }}
                       >
+                        <Search size={16} />
                         Buscar
                       </button>
                     </div>
                     {searchResults.length > 0 && (
-                      <ul className="list-group">
+                      <div className="list-group">
                         {searchResults.map((emp) => (
-                          <li
+                          <button
                             key={emp.id}
                             className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                            style={{ cursor: "pointer" }}
                             onClick={() => handleSelectToAssign(emp)}
+                            style={{
+                              borderRadius: "10px",
+                              marginBottom: "8px",
+                              border: "1px solid #E5E0D8",
+                            }}
                           >
                             <div>
                               <strong>{emp.name}</strong>
@@ -565,14 +1112,22 @@ export function EmpleadosPage() {
                                 {emp.email}
                               </small>
                             </div>
-                            <span className="badge bg-secondary">
+                            <span
+                              className="badge rounded-pill"
+                              style={{
+                                backgroundColor: emp.idSucursal
+                                  ? "rgba(22, 163, 74, 0.1)"
+                                  : "rgba(212, 160, 23, 0.1)",
+                                color: emp.idSucursal ? "#16A34A" : "#D4A017",
+                              }}
+                            >
                               {emp.idSucursal
                                 ? `Sucursal #${emp.idSucursal}`
                                 : "Sin sucursal"}
                             </span>
-                          </li>
+                          </button>
                         ))}
-                      </ul>
+                      </div>
                     )}
                     {searchResults.length === 0 && searchEmail && (
                       <p className="text-muted text-center">
@@ -582,41 +1137,156 @@ export function EmpleadosPage() {
                   </>
                 ) : (
                   <>
-                    <div className="alert alert-info">
-                      Asignando a: <strong>{selectedToAssign.name}</strong> (
-                      {selectedToAssign.email})
+                    <div
+                      className="alert d-flex justify-content-between align-items-center mb-4"
+                      style={{
+                        backgroundColor: "rgba(139, 26, 26, 0.08)",
+                        border: "1px solid rgba(139, 26, 26, 0.2)",
+                        borderRadius: "10px",
+                      }}
+                    >
+                      <div>
+                        <strong>{selectedToAssign.name}</strong>
+                        <br />
+                        <small>{selectedToAssign.email}</small>
+                      </div>
                       <button
-                        className="btn btn-sm btn-link"
+                        className="btn btn-sm"
                         onClick={() => setSelectedToAssign(null)}
+                        style={{ color: "#8B1A1A" }}
                       >
                         Cambiar
                       </button>
                     </div>
                     <div className="row g-3">
-                      {[
-                        { label: "Nombres", key: "nombres" },
-                        { label: "Apellidos", key: "apellidos" },
-                        { label: "CI", key: "ci" },
-                        { label: "Teléfono", key: "telefono" },
-                        { label: "Turno", key: "turno" },
-                      ].map(({ label, key }) => (
-                        <div className="col-md-6" key={key}>
-                          <label className="form-label">{label}</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            value={(asignarForm as any)[key]}
-                            onChange={(e) =>
-                              setAsignarForm({
-                                ...asignarForm,
-                                [key]: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                      ))}
+                      <div className="col-md-6">
+                        <label
+                          className="form-label fw-semibold"
+                          style={{ fontSize: "0.8rem" }}
+                        >
+                          Nombres
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={asignarForm.nombres}
+                          onChange={(e) =>
+                            setAsignarForm({
+                              ...asignarForm,
+                              nombres: e.target.value,
+                            })
+                          }
+                          style={{
+                            borderRadius: "10px",
+                            borderColor: "#E5E0D8",
+                            height: "42px",
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label
+                          className="form-label fw-semibold"
+                          style={{ fontSize: "0.8rem" }}
+                        >
+                          Apellidos
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={asignarForm.apellidos}
+                          onChange={(e) =>
+                            setAsignarForm({
+                              ...asignarForm,
+                              apellidos: e.target.value,
+                            })
+                          }
+                          style={{
+                            borderRadius: "10px",
+                            borderColor: "#E5E0D8",
+                            height: "42px",
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label
+                          className="form-label fw-semibold"
+                          style={{ fontSize: "0.8rem" }}
+                        >
+                          CI
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={asignarForm.ci}
+                          onChange={(e) =>
+                            setAsignarForm({
+                              ...asignarForm,
+                              ci: e.target.value,
+                            })
+                          }
+                          style={{
+                            borderRadius: "10px",
+                            borderColor: "#E5E0D8",
+                            height: "42px",
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label
+                          className="form-label fw-semibold"
+                          style={{ fontSize: "0.8rem" }}
+                        >
+                          Teléfono
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={asignarForm.telefono}
+                          onChange={(e) =>
+                            setAsignarForm({
+                              ...asignarForm,
+                              telefono: e.target.value,
+                            })
+                          }
+                          style={{
+                            borderRadius: "10px",
+                            borderColor: "#E5E0D8",
+                            height: "42px",
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label
+                          className="form-label fw-semibold"
+                          style={{ fontSize: "0.8rem" }}
+                        >
+                          Turno
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Ej: Mañana"
+                          value={asignarForm.turno}
+                          onChange={(e) =>
+                            setAsignarForm({
+                              ...asignarForm,
+                              turno: e.target.value,
+                            })
+                          }
+                          style={{
+                            borderRadius: "10px",
+                            borderColor: "#E5E0D8",
+                            height: "42px",
+                          }}
+                        />
+                      </div>
                       <div className="col-md-3">
-                        <label className="form-label">Hora Entrada</label>
+                        <label
+                          className="form-label fw-semibold"
+                          style={{ fontSize: "0.8rem" }}
+                        >
+                          Hora Entrada
+                        </label>
                         <input
                           type="time"
                           className="form-control"
@@ -627,10 +1297,20 @@ export function EmpleadosPage() {
                               horaEntrada: e.target.value,
                             })
                           }
+                          style={{
+                            borderRadius: "10px",
+                            borderColor: "#E5E0D8",
+                            height: "42px",
+                          }}
                         />
                       </div>
                       <div className="col-md-3">
-                        <label className="form-label">Hora Salida</label>
+                        <label
+                          className="form-label fw-semibold"
+                          style={{ fontSize: "0.8rem" }}
+                        >
+                          Hora Salida
+                        </label>
                         <input
                           type="time"
                           className="form-control"
@@ -641,10 +1321,20 @@ export function EmpleadosPage() {
                               horaSalida: e.target.value,
                             })
                           }
+                          style={{
+                            borderRadius: "10px",
+                            borderColor: "#E5E0D8",
+                            height: "42px",
+                          }}
                         />
                       </div>
                       <div className="col-md-3">
-                        <label className="form-label">Fecha Contratación</label>
+                        <label
+                          className="form-label fw-semibold"
+                          style={{ fontSize: "0.8rem" }}
+                        >
+                          Fecha Contratación
+                        </label>
                         <input
                           type="date"
                           className="form-control"
@@ -655,10 +1345,21 @@ export function EmpleadosPage() {
                               fechaContratacion: e.target.value,
                             })
                           }
+                          style={{
+                            borderRadius: "10px",
+                            borderColor: "#E5E0D8",
+                            height: "42px",
+                          }}
                         />
                       </div>
                       <div className="col-md-3">
-                        <label className="form-label">Sucursal</label>
+                        <label
+                          className="form-label fw-semibold"
+                          style={{ fontSize: "0.8rem" }}
+                        >
+                          <Building2 size={14} className="me-1" />
+                          Sucursal
+                        </label>
                         <select
                           className="form-select"
                           value={asignarForm.idSucursal}
@@ -668,6 +1369,11 @@ export function EmpleadosPage() {
                               idSucursal: e.target.value,
                             })
                           }
+                          style={{
+                            borderRadius: "10px",
+                            borderColor: "#E5E0D8",
+                            height: "42px",
+                          }}
                         >
                           <option value="">Seleccionar...</option>
                           {sucursales.map((s) => (
@@ -681,21 +1387,39 @@ export function EmpleadosPage() {
                   </>
                 )}
               </div>
-              <div className="modal-footer">
+              <div
+                className="modal-footer border-0"
+                style={{ backgroundColor: "#FFFFFF", padding: "1rem 1.5rem" }}
+              >
                 <button
-                  className="btn btn-secondary"
+                  className="btn"
                   onClick={() => {
                     setShowAsignarModal(false);
                     setSelectedToAssign(null);
+                  }}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "1px solid #E5E0D8",
+                    borderRadius: "10px",
+                    padding: "0.5rem 1.25rem",
+                    color: "#6B7280",
                   }}
                 >
                   Cancelar
                 </button>
                 {selectedToAssign && (
                   <button
-                    className="btn btn-success"
+                    className="btn d-flex align-items-center gap-2"
                     onClick={handleSaveAsignar}
+                    style={{
+                      backgroundColor: "#8B1A1A",
+                      border: "none",
+                      borderRadius: "10px",
+                      padding: "0.5rem 1.25rem",
+                      color: "#FFFFFF",
+                    }}
                   >
+                    <Save size={16} />
                     Guardar y Asignar
                   </button>
                 )}
