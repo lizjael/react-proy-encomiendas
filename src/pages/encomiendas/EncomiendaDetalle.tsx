@@ -5,10 +5,20 @@ import {
   getEncomiendaById,
   updateEncomienda,
 } from "../../api/endpoints/encomiendas.api";
-//import { PageHeader } from "../../components/ui/PageHeader";
+import {
+  getDetallesByEncomienda,
+  createDetalle,
+  updateDetalle,
+  deleteDetalle,
+} from "../../api/endpoints/detalles.api";
 import { Spinner } from "../../components/ui/Spinner";
 import { usePermissions } from "../../hooks/usePermissions";
-import type { Encomienda, EstadoEntrega } from "../../types";
+import type {
+  Encomienda,
+  EstadoEntrega,
+  DetalleEncomienda,
+  CreateDetalleEncomiendaDto,
+} from "../../types";
 import { generarFacturaEncomienda } from "../../utils/pdfGenerator";
 import {
   Package,
@@ -22,6 +32,9 @@ import {
   ArrowLeft,
   FileText,
   Edit,
+  Plus,
+  Trash2,
+  X,
 } from "lucide-react";
 
 const estadoEntregaConfig = {
@@ -69,23 +82,49 @@ const timelineSteps = [
   },
 ];
 
+const detalleVacio: Omit<CreateDetalleEncomiendaDto, "idEncomienda"> = {
+  descripcion: "",
+  cantidad: 1,
+  pesoKg: 0,
+  costoFlete: 0,
+};
+
 export function EncomiendaDetalle() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [encomienda, setEncomienda] = useState<Encomienda | null>(null);
+  const [detalles, setDetalles] = useState<DetalleEncomienda[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEstadoModal, setShowEstadoModal] = useState(false);
   const [nuevoEstado, setNuevoEstado] = useState<EstadoEntrega>("PENDIENTE");
   const { canEdit } = usePermissions();
 
+  // ── Estado modal de detalles ──
+  const [showDetalleModal, setShowDetalleModal] = useState(false);
+  const [detalleEditando, setDetalleEditando] =
+    useState<DetalleEncomienda | null>(null);
+  const [formDetalle, setFormDetalle] =
+    useState<Omit<CreateDetalleEncomiendaDto, "idEncomienda">>(detalleVacio);
+  const [savingDetalle, setSavingDetalle] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
   useEffect(() => {
-    loadEncomienda();
+    loadAll();
   }, [id]);
 
-  const loadEncomienda = async () => {
+  // ✅ Carga encomienda Y detalles por separado para garantizar que lleguen
+  const loadAll = async () => {
+    setLoading(true);
     try {
-      const data = await getEncomiendaById(parseInt(id!));
-      setEncomienda(data);
+      const idNum = parseInt(id!);
+      const [enc, dets] = await Promise.all([
+        getEncomiendaById(idNum),
+        getDetallesByEncomienda(idNum),
+      ]);
+      setEncomienda(enc);
+      // Preferir los detalles del endpoint dedicado; si está vacío, usar los
+      // que vengan embebidos en la encomienda como fallback
+      setDetalles(dets.length > 0 ? dets : (enc.detalles ?? []));
     } catch (error) {
       toast.error("Error al cargar la encomienda");
       navigate("/encomiendas");
@@ -101,7 +140,7 @@ export function EncomiendaDetalle() {
         estadoEntrega: nuevoEstado,
       });
       toast.success("Estado actualizado correctamente");
-      loadEncomienda();
+      loadAll();
       setShowEstadoModal(false);
     } catch (error: any) {
       toast.error(
@@ -110,10 +149,90 @@ export function EncomiendaDetalle() {
     }
   };
 
+  // ✅ PDF se genera con los detalles que ya cargamos explícitamente
   const handleGeneratePDF = () => {
     if (encomienda) {
-      generarFacturaEncomienda(encomienda);
+      const encomiendaConDetalles: Encomienda = {
+        ...encomienda,
+        detalles,
+      };
+      generarFacturaEncomienda(encomiendaConDetalles);
       toast.success("Factura generada exitosamente");
+    }
+  };
+
+  // ── Handlers del modal de detalles ──
+  const abrirNuevoDetalle = () => {
+    setDetalleEditando(null);
+    setFormDetalle(detalleVacio);
+    setShowDetalleModal(true);
+  };
+
+  const abrirEditarDetalle = (det: DetalleEncomienda) => {
+    setDetalleEditando(det);
+    setFormDetalle({
+      descripcion: det.descripcion,
+      cantidad: det.cantidad,
+      pesoKg: det.pesoKg,
+      costoFlete: det.costoFlete,
+    });
+    setShowDetalleModal(true);
+  };
+
+  const cerrarDetalleModal = () => {
+    setShowDetalleModal(false);
+    setDetalleEditando(null);
+    setFormDetalle(detalleVacio);
+  };
+
+  const handleSaveDetalle = async () => {
+    if (!encomienda) return;
+    if (!formDetalle.descripcion.trim()) {
+      toast.error("La descripción es obligatoria");
+      return;
+    }
+    if (formDetalle.cantidad <= 0) {
+      toast.error("La cantidad debe ser mayor a 0");
+      return;
+    }
+    setSavingDetalle(true);
+    try {
+      if (detalleEditando) {
+        await updateDetalle(detalleEditando.idDetalle, formDetalle);
+        toast.success("Detalle actualizado correctamente");
+      } else {
+        await createDetalle({
+          ...formDetalle,
+          idEncomienda: encomienda.idEncomienda,
+        });
+        toast.success("Detalle agregado correctamente");
+      }
+      cerrarDetalleModal();
+      // Recargar solo los detalles para no perder el estado del resto
+      const dets = await getDetallesByEncomienda(encomienda.idEncomienda);
+      setDetalles(dets);
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Error al guardar el detalle",
+      );
+    } finally {
+      setSavingDetalle(false);
+    }
+  };
+
+  const handleDeleteDetalle = async (idDetalle: number) => {
+    if (!window.confirm("¿Eliminar este detalle?")) return;
+    setDeletingId(idDetalle);
+    try {
+      await deleteDetalle(idDetalle);
+      toast.success("Detalle eliminado");
+      setDetalles((prev) => prev.filter((d) => d.idDetalle !== idDetalle));
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Error al eliminar el detalle",
+      );
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -132,6 +251,11 @@ export function EncomiendaDetalle() {
   const estadoConfig = estadoEntregaConfig[encomienda.estadoEntrega];
   const EstadoIcon = estadoConfig.icon;
   const currentStep = getCurrentStepIndex();
+
+  const subtotal = detalles.reduce(
+    (acc, d) => acc + d.cantidad * d.costoFlete,
+    0,
+  );
 
   return (
     <div className="container-fluid px-0">
@@ -241,7 +365,7 @@ export function EncomiendaDetalle() {
       </div>
 
       <div className="row g-4">
-        {/* Columna izquierda - Información principal */}
+        {/* Columna izquierda */}
         <div className="col-lg-7">
           {/* Remitente */}
           <div
@@ -330,7 +454,7 @@ export function EncomiendaDetalle() {
             </div>
           </div>
 
-          {/* Detalle del paquete */}
+          {/* ✅ Detalle del paquete con CRUD */}
           <div
             className="rounded-3 overflow-hidden"
             style={{
@@ -340,7 +464,7 @@ export function EncomiendaDetalle() {
             }}
           >
             <div
-              className="p-4 border-bottom"
+              className="p-4 border-bottom d-flex justify-content-between align-items-center"
               style={{ borderColor: "#E5E0D8" }}
             >
               <div className="d-flex align-items-center gap-2">
@@ -348,58 +472,140 @@ export function EncomiendaDetalle() {
                 <h6 className="mb-0 fw-semibold" style={{ color: "#1A1A1A" }}>
                   Detalle del Paquete
                 </h6>
+                <span
+                  className="badge rounded-pill"
+                  style={{
+                    backgroundColor: "rgba(139, 26, 26, 0.1)",
+                    color: "#8B1A1A",
+                    fontSize: "0.7rem",
+                  }}
+                >
+                  {detalles.length} ítem{detalles.length !== 1 ? "s" : ""}
+                </span>
               </div>
+              {canEdit("encomiendas") && (
+                <button
+                  className="btn btn-sm d-flex align-items-center gap-1"
+                  onClick={abrirNuevoDetalle}
+                  style={{
+                    backgroundColor: "#8B1A1A",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: "#FFFFFF",
+                    fontSize: "0.78rem",
+                    padding: "0.3rem 0.75rem",
+                  }}
+                >
+                  <Plus size={14} />
+                  Agregar ítem
+                </button>
+              )}
             </div>
             <div className="p-0">
-              <div className="table-responsive">
-                <table className="table mb-0">
-                  <thead style={{ backgroundColor: "#F8F5F0" }}>
-                    <tr>
-                      <th className="ps-4">Descripción</th>
-                      <th className="text-center">Cantidad</th>
-                      <th className="text-center">Peso (kg)</th>
-                      <th className="text-end">Costo Flete</th>
-                      <th className="text-end pe-4">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {encomienda.detalles?.map((detalle) => (
-                      <tr key={detalle.idDetalle}>
-                        <td className="ps-4">{detalle.descripcion}</td>
-                        <td className="text-center">{detalle.cantidad}</td>
-                        <td className="text-center">
-                          {detalle.pesoKg.toFixed(2)}
+              {detalles.length === 0 ? (
+                <div className="text-center py-5 text-muted">
+                  <Package size={36} color="#E5E0D8" className="mb-2" />
+                  <p className="mb-0 small">No hay ítems registrados.</p>
+                  {canEdit("encomiendas") && (
+                    <p className="mb-0 small">
+                      Haz clic en "Agregar ítem" para comenzar.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table mb-0">
+                    <thead style={{ backgroundColor: "#F8F5F0" }}>
+                      <tr>
+                        <th className="ps-4">Descripción</th>
+                        <th className="text-center">Cantidad</th>
+                        <th className="text-center">Peso (kg)</th>
+                        <th className="text-end">Costo Flete</th>
+                        <th className="text-end">Subtotal</th>
+                        {canEdit("encomiendas") && (
+                          <th className="text-center pe-4">Acciones</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detalles.map((detalle) => (
+                        <tr key={detalle.idDetalle}>
+                          <td className="ps-4">{detalle.descripcion}</td>
+                          <td className="text-center">{detalle.cantidad}</td>
+                          <td className="text-center">
+                            {Number(detalle.pesoKg).toFixed(2)}
+                          </td>
+                          <td className="text-end">
+                            Bs. {Number(detalle.costoFlete).toFixed(2)}
+                          </td>
+                          <td className="text-end fw-semibold">
+                            Bs.{" "}
+                            {(detalle.cantidad * detalle.costoFlete).toFixed(2)}
+                          </td>
+                          {canEdit("encomiendas") && (
+                            <td className="text-center pe-4">
+                              <div className="d-flex justify-content-center gap-2">
+                                <button
+                                  className="btn btn-sm"
+                                  title="Editar"
+                                  onClick={() => abrirEditarDetalle(detalle)}
+                                  style={{
+                                    padding: "0.2rem 0.5rem",
+                                    backgroundColor: "rgba(2,132,199,0.1)",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    color: "#0284C7",
+                                  }}
+                                >
+                                  <Edit size={13} />
+                                </button>
+                                <button
+                                  className="btn btn-sm"
+                                  title="Eliminar"
+                                  disabled={deletingId === detalle.idDetalle}
+                                  onClick={() =>
+                                    handleDeleteDetalle(detalle.idDetalle)
+                                  }
+                                  style={{
+                                    padding: "0.2rem 0.5rem",
+                                    backgroundColor: "rgba(220,38,38,0.1)",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    color: "#DC2626",
+                                  }}
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot
+                      style={{
+                        backgroundColor: "#F8F5F0",
+                        borderTop: "1px solid #E5E0D8",
+                      }}
+                    >
+                      <tr>
+                        <td
+                          colSpan={canEdit("encomiendas") ? 5 : 4}
+                          className="text-end fw-bold ps-4"
+                        >
+                          Total:
                         </td>
-                        <td className="text-end">
-                          Bs. {detalle.costoFlete.toFixed(2)}
-                        </td>
-                        <td className="text-end pe-4 fw-semibold">
-                          Bs.{" "}
-                          {(detalle.cantidad * detalle.costoFlete).toFixed(2)}
+                        <td
+                          className="text-end fw-bold pe-4"
+                          style={{ color: "#8B1A1A" }}
+                        >
+                          Bs. {subtotal.toFixed(2)}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot
-                    style={{
-                      backgroundColor: "#F8F5F0",
-                      borderTop: "1px solid #E5E0D8",
-                    }}
-                  >
-                    <tr>
-                      <td colSpan={4} className="text-end fw-bold ps-4">
-                        Total:
-                      </td>
-                      <td
-                        className="text-end fw-bold pe-4"
-                        style={{ color: "#8B1A1A" }}
-                      >
-                        Bs. {encomienda.costoTotal.toFixed(2)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -443,7 +649,6 @@ export function EncomiendaDetalle() {
                       className="position-relative"
                       style={{ paddingLeft: "32px" }}
                     >
-                      {/* Línea conectora */}
                       {index < timelineSteps.length - 1 && (
                         <div
                           style={{
@@ -459,7 +664,6 @@ export function EncomiendaDetalle() {
                           }}
                         />
                       )}
-                      {/* Círculo */}
                       <div
                         className="position-absolute d-flex align-items-center justify-content-center"
                         style={{
@@ -478,7 +682,6 @@ export function EncomiendaDetalle() {
                           color={isCompleted ? "#FFFFFF" : "#9CA3AF"}
                         />
                       </div>
-                      {/* Contenido */}
                       <div className="mb-4">
                         <p
                           className="mb-0 fw-semibold"
@@ -589,7 +792,7 @@ export function EncomiendaDetalle() {
         </div>
       </div>
 
-      {/* Modal Actualizar Estado */}
+      {/* ── Modal Actualizar Estado ── */}
       {showEstadoModal && (
         <div
           className="modal show d-block"
@@ -652,14 +855,185 @@ export function EncomiendaDetalle() {
                     padding: "0.5rem 1rem",
                     color: "#FFFFFF",
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#5C0E0E";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#8B1A1A";
-                  }}
                 >
                   Actualizar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Agregar / Editar Detalle ── */}
+      {showDetalleModal && (
+        <div
+          className="modal show d-block"
+          tabIndex={-1}
+          style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1050 }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div
+              className="modal-content"
+              style={{ borderRadius: "16px", overflow: "hidden" }}
+            >
+              <div className="modal-header border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 className="modal-title fw-semibold mb-0">
+                  {detalleEditando ? "Editar Ítem" : "Agregar Ítem"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn p-0"
+                  onClick={cerrarDetalleModal}
+                  style={{ color: "#6B7280" }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="modal-body px-4 pb-2">
+                {/* Descripción */}
+                <div className="mb-3">
+                  <label className="form-label fw-semibold small">
+                    Descripción <span style={{ color: "#DC2626" }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Ej: Ropa, electrónico, alimentos…"
+                    value={formDetalle.descripcion}
+                    onChange={(e) =>
+                      setFormDetalle((f) => ({
+                        ...f,
+                        descripcion: e.target.value,
+                      }))
+                    }
+                    style={{ borderRadius: "10px", borderColor: "#E5E0D8" }}
+                  />
+                </div>
+
+                <div className="row g-3">
+                  {/* Cantidad */}
+                  <div className="col-6">
+                    <label className="form-label fw-semibold small">
+                      Cantidad <span style={{ color: "#DC2626" }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      className="form-control"
+                      value={formDetalle.cantidad}
+                      onChange={(e) =>
+                        setFormDetalle((f) => ({
+                          ...f,
+                          cantidad: parseInt(e.target.value) || 1,
+                        }))
+                      }
+                      style={{ borderRadius: "10px", borderColor: "#E5E0D8" }}
+                    />
+                  </div>
+
+                  {/* Peso */}
+                  <div className="col-6">
+                    <label className="form-label fw-semibold small">
+                      Peso (kg)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      className="form-control"
+                      value={formDetalle.pesoKg}
+                      onChange={(e) =>
+                        setFormDetalle((f) => ({
+                          ...f,
+                          pesoKg: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                      style={{ borderRadius: "10px", borderColor: "#E5E0D8" }}
+                    />
+                  </div>
+
+                  {/* Costo Flete */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold small">
+                      Costo Flete (Bs.)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      className="form-control"
+                      value={formDetalle.costoFlete}
+                      onChange={(e) =>
+                        setFormDetalle((f) => ({
+                          ...f,
+                          costoFlete: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                      style={{ borderRadius: "10px", borderColor: "#E5E0D8" }}
+                    />
+                  </div>
+                </div>
+
+                {/* Preview subtotal */}
+                {formDetalle.cantidad > 0 && formDetalle.costoFlete > 0 && (
+                  <div
+                    className="mt-3 p-3 rounded-3"
+                    style={{ backgroundColor: "#F8F5F0" }}
+                  >
+                    <small className="text-muted">Subtotal estimado:</small>
+                    <p
+                      className="mb-0 fw-bold"
+                      style={{ color: "#8B1A1A", fontSize: "1rem" }}
+                    >
+                      Bs.{" "}
+                      {(formDetalle.cantidad * formDetalle.costoFlete).toFixed(
+                        2,
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-footer border-0 pb-4 px-4 gap-2">
+                <button
+                  className="btn"
+                  onClick={cerrarDetalleModal}
+                  disabled={savingDetalle}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "1px solid #E5E0D8",
+                    borderRadius: "8px",
+                    padding: "0.5rem 1.25rem",
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="btn d-flex align-items-center gap-2"
+                  onClick={handleSaveDetalle}
+                  disabled={savingDetalle}
+                  style={{
+                    backgroundColor: "#8B1A1A",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "0.5rem 1.25rem",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {savingDetalle ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm"
+                        role="status"
+                      />
+                      Guardando…
+                    </>
+                  ) : detalleEditando ? (
+                    "Guardar cambios"
+                  ) : (
+                    "Agregar ítem"
+                  )}
                 </button>
               </div>
             </div>
