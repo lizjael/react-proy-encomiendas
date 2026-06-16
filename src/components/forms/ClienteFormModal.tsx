@@ -11,7 +11,8 @@ interface ClienteFormModalProps {
   show: boolean;
   onClose: () => void;
   item?: Cliente;
-  onSaved: () => void;
+  // ✅ onSaved ahora recibe el cliente creado/actualizado
+  onSaved: (cliente: Cliente) => void;
 }
 
 const normalizeTipoCliente = (
@@ -103,14 +104,16 @@ export function ClienteFormModal({
 
   const onSubmit = async (data: CreateClienteDto) => {
     try {
+      let saved: Cliente;
       if (item) {
-        await updateCliente(item.idCliente, data);
+        saved = await updateCliente(item.idCliente, data);
         toast.success("Cliente actualizado correctamente");
       } else {
-        await createCliente(data);
+        // ✅ Captura el objeto retornado por la API y lo pasa a onSaved
+        saved = await createCliente(data);
         toast.success("Cliente creado correctamente");
       }
-      onSaved();
+      onSaved(saved);
       onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Error al guardar cliente");
