@@ -1042,18 +1042,26 @@ export function NuevaEncomiendaWizard() {
       <ClienteFormModal
         show={showClienteModal}
         onClose={() => setShowClienteModal(false)}
-        onSaved={() => {
+        onSaved={(clienteCreado) => {
+          // ✅ Auto-selecciona el cliente recién creado en el wizard
+          dispatch({ type: "SET_CLIENTE", payload: clienteCreado });
           setShowClienteModal(false);
-          toast.success("Cliente creado, ya puedes buscarlo");
+          toast.success(
+            `Cliente "${clienteCreado.nombreRazonSocial}" creado y seleccionado`,
+          );
         }}
       />
 
       <ConsignatarioFormModal
         show={showConsignatarioModal}
         onClose={() => setShowConsignatarioModal(false)}
-        onSaved={() => {
+        onSaved={(consignatarioCreado) => {
+          // ✅ Auto-selecciona el consignatario recién creado en el wizard
+          dispatch({ type: "SET_CONSIGNATARIO", payload: consignatarioCreado });
           setShowConsignatarioModal(false);
-          toast.success("Consignatario creado, ya puedes buscarlo");
+          toast.success(
+            `Consignatario "${consignatarioCreado.nombres}" creado y seleccionado`,
+          );
         }}
       />
     </div>
