@@ -1,16 +1,19 @@
 // src/utils/pdfGenerator.ts
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type {
-  Encomienda,
-  Pago,
-} from "../types";
+import type { Encomienda, Pago } from "../types";
+
+// Utilidad: convierte cualquier valor a número seguro para toFixed()
+const n = (val: unknown): number => {
+  const num = Number(val);
+  return isNaN(num) ? 0 : num;
+};
 
 export function generarFacturaEncomienda(encomienda: Encomienda) {
   const doc = new jsPDF();
   const hoy = new Date().toLocaleDateString("es-ES");
 
-  // Logo y encabezado
+  // ── Encabezado ──
   doc.setFontSize(20);
   doc.text("GESTENC", 14, 20);
   doc.setFontSize(10);
@@ -20,27 +23,31 @@ export function generarFacturaEncomienda(encomienda: Encomienda) {
 
   doc.line(14, 50, 196, 50);
 
-  // Datos del cliente
+  // ── Remitente ──
   doc.setFontSize(12);
   doc.text("DATOS DEL REMITENTE", 14, 60);
   doc.setFontSize(10);
   doc.text(`Nombre: ${encomienda.cliente?.nombreRazonSocial || "N/A"}`, 14, 68);
   doc.text(
-    `Documento: ${encomienda.cliente?.tipoCliente === "NATURAL" ? `CI: ${encomienda.cliente?.ci}` : `NIT: ${encomienda.cliente?.nit}`}`,
+    `Documento: ${
+      encomienda.cliente?.tipoCliente === "NATURAL"
+        ? `CI: ${encomienda.cliente?.ci ?? "N/A"}`
+        : `NIT: ${encomienda.cliente?.nit ?? "N/A"}`
+    }`,
     14,
     76,
   );
   doc.text(`Teléfono: ${encomienda.cliente?.telefono || "N/A"}`, 14, 84);
   doc.text(`Dirección: ${encomienda.cliente?.direccion || "N/A"}`, 14, 92);
 
-  // Datos del consignatario
+  // ── Destinatario ──
   doc.setFontSize(12);
   doc.text("DATOS DEL DESTINATARIO", 14, 104);
   doc.setFontSize(10);
   doc.text(`Nombre: ${encomienda.consignatario?.nombres || "N/A"}`, 14, 112);
   doc.text(`Teléfono: ${encomienda.consignatario?.telefono || "N/A"}`, 14, 120);
 
-  // Ruta
+  // ── Ruta ──
   doc.setFontSize(12);
   doc.text("RUTA DE ENVÍO", 14, 132);
   doc.setFontSize(10);
@@ -55,14 +62,15 @@ export function generarFacturaEncomienda(encomienda: Encomienda) {
     148,
   );
 
-  // Tabla de ítems
+  // ── Tabla de ítems ──
+  // ✅ Todos los valores numéricos pasan por n() antes de toFixed()
   const tableData =
     encomienda.detalles?.map((d) => [
-      d.descripcion,
-      d.cantidad.toString(),
-      `${d.pesoKg.toFixed(2)} kg`,
-      `Bs. ${d.costoFlete.toFixed(2)}`,
-      `Bs. ${(d.cantidad * d.costoFlete).toFixed(2)}`,
+      d.descripcion || "-",
+      String(n(d.cantidad)),
+      `${n(d.pesoKg).toFixed(2)} kg`,
+      `Bs. ${n(d.costoFlete).toFixed(2)}`,
+      `Bs. ${(n(d.cantidad) * n(d.costoFlete)).toFixed(2)}`,
     ]) || [];
 
   autoTable(doc, {
@@ -77,14 +85,14 @@ export function generarFacturaEncomienda(encomienda: Encomienda) {
           styles: { halign: "right", fontStyle: "bold" },
         },
         {
-          content: `Bs. ${encomienda.costoTotal.toFixed(2)}`,
+          content: `Bs. ${n(encomienda.costoTotal).toFixed(2)}`,
           styles: { fontStyle: "bold" },
         },
       ],
     ],
   });
 
-  // Información de pago
+  // ── Información de pago ──
   const finalY = (doc as any).lastAutoTable.finalY + 10;
   doc.setFontSize(12);
   doc.text("INFORMACIÓN DE PAGO", 14, finalY);
@@ -93,9 +101,13 @@ export function generarFacturaEncomienda(encomienda: Encomienda) {
     (p) => p.estado === "COMPLETADO",
   );
   if (pagoCompletado) {
-    doc.text(`Monto: Bs. ${pagoCompletado.monto.toFixed(2)}`, 14, finalY + 8);
     doc.text(
-      `Método: ${pagoCompletado.metodoPago.replace("_", " ")}`,
+      `Monto: Bs. ${n(pagoCompletado.monto).toFixed(2)}`,
+      14,
+      finalY + 8,
+    );
+    doc.text(
+      `Método: ${pagoCompletado.metodoPago.replace(/_/g, " ")}`,
       14,
       finalY + 16,
     );
@@ -118,7 +130,7 @@ export function generarFacturaEncomienda(encomienda: Encomienda) {
     finalY + 56,
   );
 
-  // Pie de página
+  // ── Pie de página ──
   doc.setFontSize(8);
   doc.text("Gracias por preferirnos", 14, 280);
   doc.text(`Documento generado el ${hoy}`, 14, 288);
@@ -141,7 +153,6 @@ export function generarReporteEncomiendas(
     ? JSON.parse(localStorage.getItem("user")!).name
     : "Usuario";
 
-  // Encabezado
   doc.setFontSize(20);
   doc.text("GESTENC", 14, 20);
   doc.setFontSize(14);
@@ -157,23 +168,18 @@ export function generarReporteEncomiendas(
       61,
     );
   }
-  if (filtros.sucursal) {
-    doc.text(`Sucursal: ${filtros.sucursal}`, 14, 69);
-  }
-  if (filtros.estado) {
-    doc.text(`Estado: ${filtros.estado}`, 14, 77);
-  }
+  if (filtros.sucursal) doc.text(`Sucursal: ${filtros.sucursal}`, 14, 69);
+  if (filtros.estado) doc.text(`Estado: ${filtros.estado}`, 14, 77);
 
   doc.line(14, 85, 196, 85);
 
-  // Tabla de encomiendas
   const tableData = encomiendas.map((e) => [
     e.nroGuia,
     e.cliente?.nombreRazonSocial || "N/A",
     e.consignatario?.nombres || "N/A",
     e.estadoEntrega,
     e.estadoPago,
-    `Bs. ${e.costoTotal.toFixed(2)}`,
+    `Bs. ${n(e.costoTotal).toFixed(2)}`,
     new Date(e.fechaEmision).toLocaleDateString(),
   ]);
 
@@ -199,7 +205,7 @@ export function generarReporteEncomiendas(
           styles: { halign: "right", fontStyle: "bold" },
         },
         {
-          content: `Bs. ${encomiendas.reduce((sum, e) => sum + e.costoTotal, 0).toFixed(2)}`,
+          content: `Bs. ${encomiendas.reduce((sum, e) => sum + n(e.costoTotal), 0).toFixed(2)}`,
           styles: { fontStyle: "bold" },
         },
         { content: "", styles: { fontStyle: "bold" } },
@@ -220,7 +226,6 @@ export function generarReportePagos(
     ? JSON.parse(localStorage.getItem("user")!).name
     : "Usuario";
 
-  // Encabezado
   doc.setFontSize(20);
   doc.text("GESTENC", 14, 20);
   doc.setFontSize(14);
@@ -236,21 +241,18 @@ export function generarReportePagos(
       61,
     );
   }
-  if (filtros.metodo) {
-    doc.text(`Método: ${filtros.metodo.replace("_", " ")}`, 14, 69);
-  }
-  if (filtros.estado && filtros.estado !== "TODOS") {
+  if (filtros.metodo)
+    doc.text(`Método: ${filtros.metodo.replace(/_/g, " ")}`, 14, 69);
+  if (filtros.estado && filtros.estado !== "TODOS")
     doc.text(`Estado: ${filtros.estado}`, 14, 77);
-  }
 
   doc.line(14, 85, 196, 85);
 
-  // Tabla de pagos
   const tableData = pagos.map((p) => [
     p.idPago.toString(),
     p.idEncomienda.toString(),
-    `Bs. ${p.monto.toFixed(2)}`,
-    p.metodoPago.replace("_", " "),
+    `Bs. ${n(p.monto).toFixed(2)}`,
+    p.metodoPago.replace(/_/g, " "),
     p.referencia || "-",
     p.estado,
     new Date(p.fecha).toLocaleDateString(),
@@ -258,7 +260,7 @@ export function generarReportePagos(
 
   const totalRecaudado = pagos
     .filter((p) => p.estado === "COMPLETADO")
-    .reduce((sum, p) => sum + p.monto, 0);
+    .reduce((sum, p) => sum + n(p.monto), 0);
 
   autoTable(doc, {
     startY: 90,
