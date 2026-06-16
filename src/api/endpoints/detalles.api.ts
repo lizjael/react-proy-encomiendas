@@ -5,6 +5,16 @@ import type {
   CreateDetalleEncomiendaDto,
 } from "../../types";
 
+// ✅ NUEVO: obtener todos los detalles de una encomienda específica
+export async function getDetallesByEncomienda(
+  idEncomienda: number,
+): Promise<DetalleEncomienda[]> {
+  const res = await api.get<DetalleEncomienda[]>(
+    `/detalle-encomiendas/encomienda/${idEncomienda}`,
+  );
+  return res.data;
+}
+
 export async function createDetalle(
   dto: CreateDetalleEncomiendaDto,
 ): Promise<DetalleEncomienda> {
