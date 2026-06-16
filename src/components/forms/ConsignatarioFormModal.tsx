@@ -14,7 +14,8 @@ interface ConsignatarioFormModalProps {
   show: boolean;
   onClose: () => void;
   item?: Consignatario;
-  onSaved: () => void;
+  // ✅ onSaved ahora recibe el consignatario creado/actualizado
+  onSaved: (consignatario: Consignatario) => void;
 }
 
 const schema = yup.object({
@@ -58,14 +59,16 @@ export function ConsignatarioFormModal({
 
   const onSubmit = async (data: CreateConsignatarioDto) => {
     try {
+      let saved: Consignatario;
       if (item) {
-        await updateConsignatario(item.idConsignatario, data);
+        saved = await updateConsignatario(item.idConsignatario, data);
         toast.success("Consignatario actualizado correctamente");
       } else {
-        await createConsignatario(data);
+        // ✅ Captura el objeto retornado por la API y lo pasa a onSaved
+        saved = await createConsignatario(data);
         toast.success("Consignatario creado correctamente");
       }
-      onSaved();
+      onSaved(saved);
       onClose();
     } catch (error: any) {
       toast.error(
